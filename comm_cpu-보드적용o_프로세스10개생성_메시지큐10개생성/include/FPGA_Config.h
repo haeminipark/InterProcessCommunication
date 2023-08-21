@@ -1,0 +1,483 @@
+/*-----------------------------------------------------------------------------+
+|                 CopyRight ⓒ DaeaTi Co., Ltd.                                |
+|                 All Rights Reserved                                          |
++------------------------------------------------------------------------------+
+| FILE        : FPGA_Config.h                                                       |
+| DIRECTORY   : 													           |
+| PROCESS     :                                                                |
+| 고 객 명    : 전략R&D팀                                                         
+| PROJECT     : ZEST                                                
+| 작성 일자   : 2017.03.09      
+| 작 성 자    :  이창수                                                              
+| SYSTEM 정보 : 개발 환경 - PC                                                 |
+|               운영 쳬제 - Linux                                            
+|               TARGET    - TI-AM5K2E04	 								       
+|               LANGUAGE  -   C language                                       |
++------------------------------------------------------------------------------+
+| 1. FUNCTION DESCRIPTION                                                      |
+|	FPGA 환경을 선언한 공통 헤더							   |
+|                                                                              |
+| 2. 소속 함수                                                                 |
+|																			   |
+| 3. Routine Tree                                                              |
+|                                                                              |
++------------------------------------------------------------------------------*/
+
+#define MAP_FILE_POS		"/dev/mem"
+
+/*=============================================================================+
+|		LED Status																			 |
++==============================================================================*/
+#define LED_ON 	1
+#define LED_OFF	0
+
+typedef enum
+{
+	RUN_LED = 0,
+	ACC1_LED = 1,
+	STAT_LED = 2,
+	ACC2_LED = 3,
+	ALL_LED = 4,
+}LED_TYPE;
+
+
+/*=============================================================================+
+|		7-Segment Code..																			 |
++==============================================================================*/
+/*=============================================================================+
+|		Alarm Code define
+|		  A
+|		F  B
+|		  G
+|		E  C
+|		  D  DP
+|
+|	bit position  : 7 6 5 4    3 2  1   0	
+|				 D E G F    A B DP C 
++==============================================================================*/
+#define  CODE_INIT		0x00
+#define  CODE_0			0xDF 	// 1101 1111		'0.'
+#define  CODE_1			0x07  	// 0000 0111		'1.'
+#define  CODE_2			0xEE   	// 1110 1110		'2.'
+#define  CODE_3			0xAF   	// 1010 1111		'3.'
+#define  CODE_4			0x37   	// 0011 0111		'4.'
+#define  CODE_5			0xBB   	// 1011 1011		'5.'
+#define  CODE_6			0xFB   	// 1111 1011		'6.'
+#define  CODE_7			0x0F   	// 0000 1111		'7.'
+#define  CODE_8			0xFF   	// 1111 1111		'8.'
+#define  CODE_9			0xBF   	// 1011 1111		'9.'
+                   	
+#define  CODE_A			0x7D  	// 0111 1101		'A'
+#define  CODE_B			0xF1   	// 1111 0001		'b'
+#define  CODE_C			0xE0   	// 1110 0000		'c'
+#define  CODE_D			0xE5   	// 1110 0101		'd'
+#define  CODE_E			0xF8   	// 1111 1000		'E'
+#define  CODE_F			0x78   	// 0111 1000		'F'
+#define  CODE_G			0xD9   	// 1101 1001		'G'
+#define  CODE_H			0x75   	// 0111 0101		'H'
+#define  CODE_J			0xC5   	// 1100 0101		'J'
+#define  CODE_L			0xD0   	// 1101 0000		'L'
+#define  CODE_P			0x7C   	// 0111 1100		'P'
+#define  CODE_U			0xD5   	// 1101 0101		'U'
+
+#define  CODE_UPBAR    	0x08   	// 0000 1000		'￣ '
+#define  CODE_MIBAR    	0x20   	// 0010 0000		' ― '
+#define  CODE_UNBAR    	0x80   	// 1000 0000		' _ '
+
+
+/*=============================================================================+
+|		EMIF Section Base address definition 															 |
++==============================================================================*/
+#define EMIF_CS0_BASE           0x30000000		// NAND Flash
+#define EMIF_CS1_BASE           0x34000000		// FPGA Common Register
+#define EMIF_CS2_BASE           0x38000000		// MRAM
+#define EMIF_CS3_BASE           0x3C000000		// VME #0 
+
+/*=============================================================================+
+|		EMIF Section Base address definition 															 |
++==============================================================================*/
+#define FPGA_SDLC_REG_BASE      EMIF_CS1_BASE|0x00001000
+#define FPGA_COMMON_REG_BASE    EMIF_CS2_BASE+0x00000000
+#define FPGA_ADC_REG_BASE       EMIF_CS2_BASE+0x00000100
+
+#define FPGA_VER_REG_BASE		FPGA_COMMON_REG_BASE+0x00
+#define FPGA_TEST_REG_BASE      FPGA_COMMON_REG_BASE+0x02
+#define FPGA_TEST_REG_SIZE      0x00000002
+#define FPGA_TEST_REG_END       FPGA_TEST_REG_BASE+FPGA_TEST_REG_SIZE-1
+#define FPGA_DIO_IN_BASE        FPGA_COMMON_REG_BASE+0x8
+#define FPGA_DIO_OUT_BASE       FPGA_COMMON_REG_BASE+0x9
+#define FPGA_GPIO_LB_REG_BASE   FPGA_COMMON_REG_BASE+0x31
+
+/* internal l2 0 sram */
+#define L2_0_SRAM_BASE          0x10800000
+#define L2_0_SRAM_SIZE          0x00100000
+#define L2_0_SRAM_END           L2_0_SRAM_BASE+L2_0_SRAM_SIZE-1
+
+/* internal l2 0 sram */
+#define L2_1_SRAM_BASE          0x11800000
+#define L2_1_SRAM_SIZE          0x00100000
+#define L2_1_SRAM_END           L2_1_SRAM_BASE+L2_1_SRAM_SIZE-1
+
+/* internal msmc sram */
+#define MSMC_SRAM_BASE          0x0C000000
+#define MSMC_SRAM_SIZE          0x00100000
+#define MSMC_SRAM_END           MSMC_SRAM_BASE+MSMC_SRAM_SIZE-1
+
+/* external sram */
+#define EXT_SRAM_BASE           EMIF_CS1_BASE
+#define EXT_SRAM_SIZE           0x00200000
+#define EXT_SRAM_END            EXT_SRAM_BASE+EXT_SRAM_SIZE-1
+
+/* nor flash */
+#define NOR_FLASH_BASE          EMIF_CS0_BASE
+#define NOR_FLASH_SIZE          0x00200000
+#define NOR_FLASH_END           NOR_FLASH_BASE+NOR_FLASH_SIZE-1
+
+/* l2 0 sram test area */
+#define TEST_L2_0_SRAM_SIZE     0x00000020
+#define TEST_L2_0_SRAM_PTR      L2_0_SRAM_END-TEST_L2_0_SRAM_SIZE
+
+/* l2 1 sram test area */
+#define TEST_L2_1_SRAM_SIZE     0x00000020
+#define TEST_L2_1_SRAM_PTR      L2_1_SRAM_END-TEST_L2_1_SRAM_SIZE
+
+/* msmc sram test area */
+#define TEST_MSMC_SRAM_SIZE     0x00000020
+#define TEST_MSMC_SRAM_PTR      MSMC_SRAM_END-TEST_MSMC_SRAM_SIZE
+
+/* external sram test area */
+#define TEST_EXT_SRAM_SIZE      0x00010000
+#define TEST_EXT_SRAM_PTR       0x74000000 //EXT_SRAM_END-TEST_EXT_SRAM_SIZE
+
+/* nor falsh test area */
+#define TEST_NOR_FLASH_SIZE     0x00020000
+#define TEST_NOR_FLASH_PTR      NOR_FLASH_BASE+0x60000
+
+/* uart test buffer size */
+#define TEST_UART_BUF_SIZE      0x20
+
+/* rtc sram test buffer size */
+#define TEST_RTC_BUF_SIZE       0x20
+
+/* sdlc test buffer size */
+#define TEST_SDLC_BUF_SIZE      0x0200 // 512
+
+/* eeprom test buffer size */
+#define TEST_EEPROM_BUF_SIZE    0x20
+
+/* slave core boot */
+#define CORE_BOOT_BIN_LOAD_ADDR     EMIF_CS0_BASE+0x00040000
+#define CORE_BOOT_DONE_FLAG_ADDR    MSMC_SRAM_BASE
+
+
+
+/*=============================================================================+
+|		FPGA Common Register Offset definition															 |
+|		Base Address : EMIF_CS1_BASE           0x3400_0000												 |
+|		Range 	 	  : 0x3400_0000 ~ 0x3400_0FFF													 |
+|							 		  | Offset 	| 		Mean			| using filed, Init Value - R/W	 |
++==============================================================================*/
+#define FPGA_REG_BASE				EMIF_CS1_BASE
+#define FPGA_VER_REG_OFFSET				0x00	// FPGA Version 				15...0, X-R
+#define FPGA_TEST0_REG_OFFSET 			0x02	// FPGA Test Register 0			15...0, 0-R/W
+#define FPGA_TEST1_REG_OFFSET 			0x04	// FPGA Test Register 1			15...0, 0-R/W
+#define FPGA_TEST2_REG_OFFSET 			0x06	// FPGA Test Register 2			15...0, 0-R/W
+#define FPGA_TEST3_REG_OFFSET 			0x08	// FPGA Test Register 3			15...0, 0-R/W
+#define FPGA_TEST4_REG_OFFSET 			0x0A	// FPGA Test Register 4			15...0, 0-R/W
+#define FPGA_TEST5_REG_OFFSET 			0x0C	// FPGA Test Register 5			15...0, 0-R/W
+#define FPGA_TEST6_REG_OFFSET 			0x0E	// FPGA Test Register 6			15...0, 0-R/W
+#define FPGA_DISC_IN_REG_OFFSET 		0x10	// Discrete in Register 			3...0, X-R
+#define FPGA_DISC_OUT_REG_OFFSET 		0x12	// Discrete out Register 		3...0, X-R
+#define FPGA_RS422_CON_REG_OFFSET 		0x14	// RS-422 Enable/Disable  		15...0, 0-R/W
+#define FPGA_RS422_MODE_REG_OFFSET 		0x16	// RS-422 Mode Dip Swich 		7...0, 0-R
+#define FPGA_RS422_SPEED_REG_OFFSET 	0x18	// RS-422 Clock Mode Dip Swich	7...0, 0-R
+#define FPGA_APP_MODE_REG_OFFSET 		0x1A	// Application Mode Dip Swich	7...0, 0-R
+#define FPGA_SEGMENT_LED_REG_OFFSET 	0x1C	// 7-Segment LED Control		7...0, 0-R/W
+#define FPGA_SEGMENT_MODE_REG_OFFSET 	0x1D	// 7-Segment LED Mode Control 	7...0, 0-R
+#define FPGA_STATUS_LED_REG_OFFSET 		0x1E	// RUN/Status LED Control		3...0, 0-R/W
+#define FPGA_LED_SPEED_REG_OFFSET 		0x20	// LED Speed Control			3...2, 0-R | 1...0, 0-R/W
+#define FPGA_RS422_LED_CON_REG_OFFSET 	0x22	// RS422 LED Control			15...0, 0-R/W
+#define FPGA_RS422_LED_MODE_REG_OFFSET 	0x24	// RS422 LED Mode Control		0, 0-R/W
+#define FPGA_WDT_CON_REG_OFFSET 		0x26	// WatchDog Enable/Disable		7, 0, 0-R/W
+#define FPGA_WDT_TIMER_REG_OFFSET 		0x28	// WatchDog Timer(ms)			15-0, 0, 0-R/W
+#define FPGA_RS422_TERM_CON_REG_OFFSET 	0x30	// RS422/DIO Termination Control Register		15,14,9 -0, 0, 0-R/W
+#define FPGA_VME_EMUL_CON_REG_OFFSET 	0x32	// VME Emulator Control Register		 0-R/W
+
+/*=============================================================================+
+|		VME Section Base address definition 															 |
++==============================================================================*/
+#define VME0_REG_BASE	0xA00C0000  //modify .. EMIF_CS3_BASE
+#define VME0_MEM_SIZE 	0x4000
+#define VME1_REG_BASE 	VME0_REG_BASE|VME0_MEM_SIZE  //modify
+#define VME_MAP_MASK	(VME0_MEM_SIZE - 1)
+
+
+/*=============================================================================+
+|		HDLC Register Offset definition																 |	
+|		Base Address : EMIF_CS1_BASE + 0x1P00          0x3400_1P00 , P : port index 0,2,4,8,..		 |
+|		Range 	 	  : PORT 0 : 0x3400_1000 ~ 0x3400_11FF											 |
+|					    PORT 1 : 0x3400_1200 ~ 0x3400_13FF											 |
+|					    PORT 2 : 0x3400_1400 ~ 0x3400_15FF											 |
+|					    PORT 3 : 0x3400_1600 ~ 0x3400_17FF											 |
+|					    PORT 4 : 0x3400_1800 ~ 0x3400_19FF											 |
+|					    PORT 5 : 0x3400_1A00 ~ 0x3400_1BFF											 |
+|					    PORT 6 : 0x3400_1C00 ~ 0x3400_1DFF											 |
+|					    PORT 7 : 0x3400_1E00 ~ 0x3400_1FFF											 |
+|					 	  	| Offset 		| 		Mean			| using filed, Init Value - R/W	 |
++==============================================================================*/
+#define HDLC_REG_BASE					0x1000
+#define HDLC1_REG_BASE					0x0
+#define HDLC2_REG_BASE					0x200
+#define HDLC3_REG_BASE					0x400
+#define HDLC4_REG_BASE					0x600
+#define HDLC5_REG_BASE					0x800
+#define HDLC6_REG_BASE					0xA00
+#define HDLC7_REG_BASE					0xC00
+#define HDLC8_REG_BASE					0xE00
+
+#define HDLC_TX_CTRL_REG_OFFSET			0x00	// Tx Status and Control		5, 0-W | 4...3, 0-R | 2...1, 0-W | 0, 0-R
+#define HDLC_TX_FIFO_REG_OFFSET 		0x01	// Tx FIFO					7...0, 0-W
+#define HDLC_RX_CTRL_REG_OFFSET			0x02	// Rx Status					4...0, 0-R
+#define HDLC_RX_FIFO_REG_OFFSET			0x03	// Rx FIFO					7...0, 0-R
+#define HDLC_RX_F_SZ_REG_OFFSET			0x04	// Rx Frame Size				7...0, 0-R
+#define HDLC_CLK_REG_OFFSET				0x05	// Clock Speed Select			2...0, 0-R/W
+
+#define  TYPE_TXCON						0xA0
+#define  TYPE_TXBUFF					0xA1
+#define  TYPE_RXCON 					0xA2
+#define  TYPE_RXBUFF					0xA3
+#define  TYPE_RXSIZE					0xA4
+#define  TYPE_CLK       				0xA5
+
+#define  HDLC1_TX_CON    		HDLC1_REG_BASE |HDLC_TX_CTRL_REG_OFFSET
+#define  HDLC1_TX_BUFF      	HDLC1_REG_BASE |HDLC_TX_FIFO_REG_OFFSET
+#define  HDLC1_RX_CON      		HDLC1_REG_BASE |HDLC_RX_CTRL_REG_OFFSET
+#define  HDLC1_RX_BUFF			HDLC1_REG_BASE |HDLC_RX_FIFO_REG_OFFSET
+#define  HDLC1_RX_SIZE      	HDLC1_REG_BASE |HDLC_RX_F_SZ_REG_OFFSET
+#define  HDLC1_CLK      		HDLC1_REG_BASE |HDLC_CLK_REG_OFFSET
+
+#define  HDLC2_TX_CON    		HDLC2_REG_BASE |HDLC_TX_CTRL_REG_OFFSET
+#define  HDLC2_TX_BUFF      	HDLC2_REG_BASE |HDLC_TX_FIFO_REG_OFFSET
+#define  HDLC2_RX_CON      		HDLC2_REG_BASE |HDLC_RX_CTRL_REG_OFFSET
+#define  HDLC2_RX_BUFF			HDLC2_REG_BASE |HDLC_RX_FIFO_REG_OFFSET
+#define  HDLC2_RX_SIZE      	HDLC2_REG_BASE |HDLC_RX_F_SZ_REG_OFFSET
+#define  HDLC2_CLK      		HDLC2_REG_BASE |HDLC_CLK_REG_OFFSET
+
+#define  HDLC3_TX_CON    		HDLC3_REG_BASE |HDLC_TX_CTRL_REG_OFFSET
+#define  HDLC3_TX_BUFF      	HDLC3_REG_BASE |HDLC_TX_FIFO_REG_OFFSET
+#define  HDLC3_RX_CON      		HDLC3_REG_BASE |HDLC_RX_CTRL_REG_OFFSET
+#define  HDLC3_RX_BUFF			HDLC3_REG_BASE |HDLC_RX_FIFO_REG_OFFSET
+#define  HDLC3_RX_SIZE      	HDLC3_REG_BASE |HDLC_RX_F_SZ_REG_OFFSET
+#define  HDLC3_CLK      		HDLC3_REG_BASE |HDLC_CLK_REG_OFFSET
+
+#define  HDLC4_TX_CON    		HDLC4_REG_BASE |HDLC_TX_CTRL_REG_OFFSET
+#define  HDLC4_TX_BUFF      	HDLC4_REG_BASE |HDLC_TX_FIFO_REG_OFFSET
+#define  HDLC4_RX_CON      		HDLC4_REG_BASE |HDLC_RX_CTRL_REG_OFFSET
+#define  HDLC4_RX_BUFF			HDLC4_REG_BASE |HDLC_RX_FIFO_REG_OFFSET
+#define  HDLC4_RX_SIZE      	HDLC4_REG_BASE |HDLC_RX_F_SZ_REG_OFFSET
+#define  HDLC4_CLK      		HDLC4_REG_BASE |HDLC_CLK_REG_OFFSET
+
+#define  HDLC5_TX_CON    		HDLC5_REG_BASE |HDLC_TX_CTRL_REG_OFFSET
+#define  HDLC5_TX_BUFF      	HDLC5_REG_BASE |HDLC_TX_FIFO_REG_OFFSET
+#define  HDLC5_RX_CON      		HDLC5_REG_BASE |HDLC_RX_CTRL_REG_OFFSET
+#define  HDLC5_RX_BUFF			HDLC5_REG_BASE |HDLC_RX_FIFO_REG_OFFSET
+#define  HDLC5_RX_SIZE      	HDLC5_REG_BASE |HDLC_RX_F_SZ_REG_OFFSET
+#define  HDLC5_CLK      		HDLC5_REG_BASE |HDLC_CLK_REG_OFFSET
+
+#define  HDLC6_TX_CON    		HDLC6_REG_BASE |HDLC_TX_CTRL_REG_OFFSET
+#define  HDLC6_TX_BUFF      	HDLC6_REG_BASE |HDLC_TX_FIFO_REG_OFFSET
+#define  HDLC6_RX_CON      		HDLC6_REG_BASE |HDLC_RX_CTRL_REG_OFFSET
+#define  HDLC6_RX_BUFF			HDLC6_REG_BASE |HDLC_RX_FIFO_REG_OFFSET
+#define  HDLC6_RX_SIZE      	HDLC6_REG_BASE |HDLC_RX_F_SZ_REG_OFFSET
+#define  HDLC6_CLK      		HDLC6_REG_BASE |HDLC_CLK_REG_OFFSET
+
+#define  HDLC7_TX_CON    		HDLC7_REG_BASE |HDLC_TX_CTRL_REG_OFFSET
+#define  HDLC7_TX_BUFF      	HDLC7_REG_BASE |HDLC_TX_FIFO_REG_OFFSET
+#define  HDLC7_RX_CON      		HDLC7_REG_BASE |HDLC_RX_CTRL_REG_OFFSET
+#define  HDLC7_RX_BUFF			HDLC7_REG_BASE |HDLC_RX_FIFO_REG_OFFSET
+#define  HDLC7_RX_SIZE      	HDLC7_REG_BASE |HDLC_RX_F_SZ_REG_OFFSET
+#define  HDLC7_CLK      		HDLC7_REG_BASE |HDLC_CLK_REG_OFFSET
+
+#define  HDLC8_TX_CON    		HDLC8_REG_BASE |HDLC_TX_CTRL_REG_OFFSET
+#define  HDLC8_TX_BUFF      	HDLC8_REG_BASE |HDLC_TX_FIFO_REG_OFFSET
+#define  HDLC8_RX_CON      		HDLC8_REG_BASE |HDLC_RX_CTRL_REG_OFFSET
+#define  HDLC8_RX_BUFF			HDLC8_REG_BASE |HDLC_RX_FIFO_REG_OFFSET
+#define  HDLC8_RX_SIZE      	HDLC8_REG_BASE |HDLC_RX_F_SZ_REG_OFFSET
+#define  HDLC8_CLK      		HDLC8_REG_BASE |HDLC_CLK_REG_OFFSET
+
+/*=============================================================================+
+|		RS-422 Register Offset definition																	 |	
+|		Base Address : EMIF_CS1_BASE + 0x2P00          0x3400_2P00 , P : port index 0,2,4,8,..				 |
+|		Range 	 	  : PORT 0 : 0x3400_2000 ~ 0x3400_21FF											 |
+|					    PORT 1 : 0x3400_2200 ~ 0x3400_23FF											 |
+|					    PORT 2 : 0x3400_2400 ~ 0x3400_25FF											 |
+|					    PORT 3 : 0x3400_2600 ~ 0x3400_27FF											 |
+|					    PORT 4 : 0x3400_2800 ~ 0x3400_29FF											 |
+|					    PORT 5 : 0x3400_2A00 ~ 0x3400_2BFF											 |
+|					    PORT 6 : 0x3400_2C00 ~ 0x3400_2DFF											 |
+|					    PORT 7 : 0x3400_2E00 ~ 0x3400_2FFF											 |
+|							 	  	| Offset 		| 		Mean			| using filed, Init Value - R/W	 |
++==============================================================================*/
+#define MAX_UART_BUFF					128
+#define RS422_MAP_SIZE		0x34003000 - 0x34002000
+#define RS422_MAP_MASK		(RS422_MAP_SIZE - 1)
+#define RS422_REG_BASE					0x2000
+#define RS422_1_REG_BASE				0x0
+#define RS422_2_REG_BASE				0x20
+#define RS422_3_REG_BASE				0x40
+#define RS422_4_REG_BASE				0x60
+#define RS422_5_REG_BASE				0x80
+#define RS422_6_REG_BASE				0xA0
+#define RS422_7_REG_BASE				0xC0
+#define RS422_8_REG_BASE				0xE0
+
+#define RS422_FIFO_REG_OFFSET			0x00	// FIFO Access				7...0, X-R/W
+#define RS422_STATUS_REG_OFFSET 		0x01	// STATUS					7, 0-R | 1...0, 0-R
+#define RS422_RSVD_OFFSET				0x02	// Reserved				7...0, 0-R
+#define RS422_BR_CON_REG_OFFSET			0x03	// Baudrate Select				3...0, 0-R/W
+#define RS422_INT_CON_OFFSET			0x04	// Interrupt control			1...0, 0-R/W
+#define RS422_INT_STS_OFFSET			0x05	// Interrupt status				1...0, 0-R
+#define RS422_TX_LO_FLAG_REG_OFFSET		0x06	// Tx Available Low				7...0, 0-R
+#define RS422_TX_HI_FLAG_REG_OFFSET		0x07	// Tx Available High				7...0, 0-R
+#define RS422_RX_LO_FLAG_REG_OFFSET		0x08	// Rx Available Low				7...0, 0-R
+#define RS422_RX_HI_FLAG_REG_OFFSET		0x09	// Rx Available High				7...0, 0-R
+
+#define  TYPE_BUFF						0xB0
+#define  TYPE_STAT						0xB1
+#define  TYPE_RSVD 						0xB2
+#define  TYPE_BAUD						0xB3
+#define  TYPE_INTCON					0xB4
+#define  TYPE_INTSTS 					0xB5
+#define  TYPE_TX_LO_FLG 				0xB6
+#define  TYPE_TX_HI_FLG 				0xB7
+#define  TYPE_RX_LO_FLG					0xB8
+#define  TYPE_RX_HI_FLG					0xB9
+
+#define  UART1_BUFF    			RS422_1_REG_BASE |RS422_FIFO_REG_OFFSET
+#define  UART1_STAT      		RS422_1_REG_BASE |RS422_STATUS_REG_OFFSET
+#define  UART1_RSVD				RS422_1_REG_BASE |RS422_RSVD_OFFSET
+#define  UART1_BAUD				RS422_1_REG_BASE |RS422_BR_CON_REG_OFFSET
+#define  UART1_INT_CON      	RS422_1_REG_BASE |RS422_INT_CON_OFFSET
+#define  UART1_INT_STS      	RS422_1_REG_BASE |RS422_INT_STS_OFFSET
+#define  UART1_TX_LO_FLAG      	RS422_1_REG_BASE |RS422_TX_LO_FLAG_REG_OFFSET
+#define  UART1_TX_HI_FLAG      	RS422_1_REG_BASE |RS422_TX_HI_FLAG_REG_OFFSET
+#define  UART1_RX_LO_FLAG      	RS422_1_REG_BASE |RS422_RX_LO_FLAG_REG_OFFSET
+#define  UART1_RX_HI_FLAG      	RS422_1_REG_BASE |RS422_RX_HI_FLAG_REG_OFFSET
+
+#define  UART2_BUFF    			RS422_2_REG_BASE |RS422_FIFO_REG_OFFSET
+#define  UART2_STAT      		RS422_2_REG_BASE |RS422_STATUS_REG_OFFSET
+#define  UART2_RSVD				RS422_2_REG_BASE |RS422_RSVD_OFFSET
+#define  UART2_BAUD				RS422_2_REG_BASE |RS422_BR_CON_REG_OFFSET
+#define  UART2_INT_CON      	RS422_2_REG_BASE |RS422_INT_CON_OFFSET
+#define  UART2_INT_STS      	RS422_2_REG_BASE |RS422_INT_STS_OFFSET
+#define  UART2_TX_LO_FLAG      	RS422_2_REG_BASE |RS422_TX_LO_FLAG_REG_OFFSET
+#define  UART2_TX_HI_FLAG      	RS422_2_REG_BASE |RS422_TX_HI_FLAG_REG_OFFSET
+#define  UART2_RX_LO_FLAG      	RS422_2_REG_BASE |RS422_RX_LO_FLAG_REG_OFFSET
+#define  UART2_RX_HI_FLAG      	RS422_2_REG_BASE |RS422_RX_HI_FLAG_REG_OFFSET
+
+#define  UART3_BUFF    			RS422_3_REG_BASE |RS422_FIFO_REG_OFFSET
+#define  UART3_STAT      		RS422_3_REG_BASE |RS422_STATUS_REG_OFFSET
+#define  UART3_RSVD				RS422_3_REG_BASE |RS422_RSVD_OFFSET
+#define  UART3_BAUD				RS422_3_REG_BASE |RS422_BR_CON_REG_OFFSET
+#define  UART3_INT_CON      	RS422_3_REG_BASE |RS422_INT_CON_OFFSET
+#define  UART3_INT_STS      	RS422_3_REG_BASE |RS422_INT_STS_OFFSET
+#define  UART3_TX_LO_FLAG      	RS422_3_REG_BASE |RS422_TX_LO_FLAG_REG_OFFSET
+#define  UART3_TX_HI_FLAG      	RS422_3_REG_BASE |RS422_TX_HI_FLAG_REG_OFFSET
+#define  UART3_RX_LO_FLAG      	RS422_3_REG_BASE |RS422_RX_LO_FLAG_REG_OFFSET
+#define  UART3_RX_HI_FLAG      	RS422_3_REG_BASE |RS422_RX_HI_FLAG_REG_OFFSET
+
+#define  UART4_BUFF    			RS422_4_REG_BASE |RS422_FIFO_REG_OFFSET
+#define  UART4_STAT      		RS422_4_REG_BASE |RS422_STATUS_REG_OFFSET
+#define  UART4_RSVD				RS422_4_REG_BASE |RS422_RSVD_OFFSET
+#define  UART4_BAUD				RS422_4_REG_BASE |RS422_BR_CON_REG_OFFSET
+#define  UART4_INT_CON      	RS422_4_REG_BASE |RS422_INT_CON_OFFSET
+#define  UART4_INT_STS      	RS422_4_REG_BASE |RS422_INT_STS_OFFSET
+#define  UART4_TX_LO_FLAG      	RS422_4_REG_BASE |RS422_TX_LO_FLAG_REG_OFFSET
+#define  UART4_TX_HI_FLAG      	RS422_4_REG_BASE |RS422_TX_HI_FLAG_REG_OFFSET
+#define  UART4_RX_LO_FLAG      	RS422_4_REG_BASE |RS422_RX_LO_FLAG_REG_OFFSET
+#define  UART4_RX_HI_FLAG      	RS422_4_REG_BASE |RS422_RX_HI_FLAG_REG_OFFSET
+
+#define  UART5_BUFF    			RS422_5_REG_BASE |RS422_FIFO_REG_OFFSET
+#define  UART5_STAT      		RS422_5_REG_BASE |RS422_STATUS_REG_OFFSET
+#define  UART5_RSVD				RS422_5_REG_BASE |RS422_RSVD_OFFSET
+#define  UART5_BAUD				RS422_5_REG_BASE |RS422_BR_CON_REG_OFFSET
+#define  UART5_INT_CON      	RS422_5_REG_BASE |RS422_INT_CON_OFFSET
+#define  UART5_INT_STS      	RS422_5_REG_BASE |RS422_INT_STS_OFFSET
+#define  UART5_TX_LO_FLAG      	RS422_5_REG_BASE |RS422_TX_LO_FLAG_REG_OFFSET
+#define  UART5_TX_HI_FLAG      	RS422_5_REG_BASE |RS422_TX_HI_FLAG_REG_OFFSET
+#define  UART5_RX_LO_FLAG      	RS422_5_REG_BASE |RS422_RX_LO_FLAG_REG_OFFSET
+#define  UART5_RX_HI_FLAG      	RS422_5_REG_BASE |RS422_RX_HI_FLAG_REG_OFFSET
+
+#define  UART6_BUFF    			RS422_6_REG_BASE |RS422_FIFO_REG_OFFSET
+#define  UART6_STAT      		RS422_6_REG_BASE |RS422_STATUS_REG_OFFSET
+#define  UART6_RSVD				RS422_6_REG_BASE |RS422_RSVD_OFFSET
+#define  UART6_BAUD				RS422_6_REG_BASE |RS422_BR_CON_REG_OFFSET
+#define  UART6_INT_CON      	RS422_6_REG_BASE |RS422_INT_CON_OFFSET
+#define  UART6_INT_STS      	RS422_6_REG_BASE |RS422_INT_STS_OFFSET
+#define  UART6_TX_LO_FLAG      	RS422_6_REG_BASE |RS422_TX_LO_FLAG_REG_OFFSET
+#define  UART6_TX_HI_FLAG      	RS422_6_REG_BASE |RS422_TX_HI_FLAG_REG_OFFSET
+#define  UART6_RX_LO_FLAG      	RS422_6_REG_BASE |RS422_RX_LO_FLAG_REG_OFFSET
+#define  UART6_RX_HI_FLAG      	RS422_6_REG_BASE |RS422_RX_HI_FLAG_REG_OFFSET
+
+#define  UART7_BUFF    			RS422_7_REG_BASE |RS422_FIFO_REG_OFFSET
+#define  UART7_STAT      		RS422_7_REG_BASE |RS422_STATUS_REG_OFFSET
+#define  UART7_RSVD				RS422_7_REG_BASE |RS422_RSVD_OFFSET
+#define  UART7_BAUD				RS422_7_REG_BASE |RS422_BR_CON_REG_OFFSET
+#define  UART7_INT_CON      	RS422_7_REG_BASE |RS422_INT_CON_OFFSET
+#define  UART7_INT_STS      	RS422_7_REG_BASE |RS422_INT_STS_OFFSET
+#define  UART7_TX_LO_FLAG      	RS422_7_REG_BASE |RS422_TX_LO_FLAG_REG_OFFSET
+#define  UART7_TX_HI_FLAG      	RS422_7_REG_BASE |RS422_TX_HI_FLAG_REG_OFFSET
+#define  UART7_RX_LO_FLAG      	RS422_7_REG_BASE |RS422_RX_LO_FLAG_REG_OFFSET
+#define  UART7_RX_HI_FLAG      	RS422_7_REG_BASE |RS422_RX_HI_FLAG_REG_OFFSET
+
+#define  UART8_BUFF    			RS422_8_REG_BASE |RS422_FIFO_REG_OFFSET
+#define  UART8_STAT      		RS422_8_REG_BASE |RS422_STATUS_REG_OFFSET
+#define  UART8_RSVD				RS422_8_REG_BASE |RS422_RSVD_OFFSET
+#define  UART8_BAUD				RS422_8_REG_BASE |RS422_BR_CON_REG_OFFSET
+#define  UART8_INT_CON      	RS422_8_REG_BASE |RS422_INT_CON_OFFSET
+#define  UART8_INT_STS      	RS422_8_REG_BASE |RS422_INT_STS_OFFSET
+#define  UART8_TX_LO_FLAG      	RS422_8_REG_BASE |RS422_TX_LO_FLAG_REG_OFFSET
+#define  UART8_TX_HI_FLAG      	RS422_8_REG_BASE |RS422_TX_HI_FLAG_REG_OFFSET
+#define  UART8_RX_LO_FLAG      	RS422_8_REG_BASE |RS422_RX_LO_FLAG_REG_OFFSET
+#define  UART8_RX_HI_FLAG      	RS422_8_REG_BASE |RS422_RX_HI_FLAG_REG_OFFSET
+
+#define  BAUDRATE_DEFAULT	0x0	//115200
+#define  BAUDRATE_110		0x1
+#define  BAUDRATE_300		0x2
+#define  BAUDRATE_600		0x3
+#define  BAUDRATE_1200		0x4
+#define  BAUDRATE_2400		0x5
+#define  BAUDRATE_4800		0x6
+#define  BAUDRATE_9600		0x7
+#define  BAUDRATE_14400		0x8
+#define  BAUDRATE_19200		0x9
+#define  BAUDRATE_38400		0xA
+#define  BAUDRATE_57600		0xB
+#define  BAUDRATE_115200	0xC
+#define  BAUDRATE_230400	0xD
+#define  BAUDRATE_460800	0xE
+#define  BAUDRATE_921600	0xF
+
+/*=============================================================================+
+|		Standard Time																								 							 |
++==============================================================================*/
+#define RTC_REG_ADDR_BASE	((unsigned char *)0xf207fff8)	/* NVRAM */
+#define RTC_REG_CONTROL		((unsigned char *)0xf207fff8)
+#define RTC_REG_SECOND		((unsigned char *)0xf207fff9)
+#define RTC_REG_MINUTE		((unsigned char *)0xf207fffa)
+#define RTC_REG_HOUR		((unsigned char *)0xf207fffb)
+#define RTC_REG_DAY			((unsigned char *)0xf207fffc)
+#define RTC_REG_DATE		((unsigned char *)0xf207fffd)
+#define RTC_REG_MONTH		((unsigned char *)0xf207fffe)
+#define RTC_REG_YEAR		((unsigned char *)0xf207ffff)
+#define RTC_REG_STOP		((unsigned char *)0xf207fff9)	/* Bit 7 = STOP */
+#define RTC_REG_KSTART		((unsigned char *)0xf207fffb)	/* Bit 7 = KICK START */
+
+
+#define RTC_VAL_WRITE			(char)0x80			/* Values to be written to the */
+#define RTC_VAL_READ			(char)0x40			/* RTC_CONTROL register */
+#define RTC_VAL_STOPPED			(char)0x80			/* Values for starting and */
+#define RTC_VAL_KICK			(char)0x80			/* stopping the oscillator */
+
+
+

@@ -1,0 +1,5 @@
+killall -9 PROC_TEST1
+killall -9 PROC_TEST2
+killall -9 PROC_TEST3
+killall -9 PROC_TEST4
+killall -9 PROC_TEST5

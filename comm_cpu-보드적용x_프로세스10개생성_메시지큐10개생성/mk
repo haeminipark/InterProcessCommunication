@@ -1,0 +1,84 @@
+#! /bin/sh
+
+killall -9 PROC_TEST0
+killall -9 PROC_TEST1
+killall -9 PROC_TEST2
+killall -9 PROC_TEST3
+killall -9 PROC_TEST4
+killall -9 PROC_TEST5
+killall -9 PROC_TEST6
+killall -9 PROC_TEST7
+killall -9 PROC_TEST8
+killall -9 PROC_TEST9
+
+##-------------- main_proc --------------
+cd proc_main
+make clean
+make
+sleep 1
+
+
+##-------------- PROC_TEST0 --------------
+cd ../proc_test0
+make clean
+make
+sleep 1
+
+
+##-------------- PROC_TEST1 --------------
+cd ../proc_test1
+make clean
+make
+sleep 1
+
+##-------------- PROC_TEST2 --------------
+cd ../proc_test2
+make clean
+make
+sleep 1
+
+##-------------- PROC_TEST3 --------------
+cd ../proc_test3
+make clean
+make
+sleep 1
+
+##-------------- PROC_TEST4 --------------
+cd ../proc_test4
+make clean
+make
+sleep 1
+
+##-------------- PROC_TEST5 --------------
+cd ../proc_test5
+make clean
+make
+sleep 1
+
+##-------------- PROC_TEST6 --------------
+cd ../proc_test6
+make clean
+make
+sleep 1
+
+##-------------- PROC_TEST7 --------------
+cd ../proc_test7
+make clean
+make
+sleep 1
+
+##-------------- PROC_TEST8 --------------
+cd ../proc_test8
+make clean
+make
+sleep 1
+
+##-------------- PROC_TEST9 --------------
+cd ../proc_test9
+make clean
+make
+sleep 1
+
+cd ../image
+chmod 777 *
+./proc_main &

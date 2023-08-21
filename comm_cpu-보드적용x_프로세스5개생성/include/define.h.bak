@@ -1,0 +1,1429 @@
+/*-----------------------------------------------------------------------------+
+|                 CopyRight ⓒ DaeaTi Co., Ltd.                                |
+|                 All Rights Reserved                                          |
++------------------------------------------------------------------------------+
+| FILE        : define.h                                                       |
+| DIRECTORY   : 													           |
+| PROCESS     :                                                                |
+| 고 객 명    : 부산교통공사                                                           |
+| PROJECT     : 부산도시철도 1호선 개량 신호설비 기자재 구매                                    |
+| 작성 일자   : 2016.04.26                                                         |
+| 작 성 자    :                                                                   |
+| SYSTEM 정보 : 개발 환경 - PC                                                      |
+|               운영 쳬제 - Linux                                            
+|               TARGET    - TI-AM5K2E04	 								       
+|               LANGUAGE  -   C language                                       |
++------------------------------------------------------------------------------+
+| 1. FUNCTION DESCRIPTION                                                      |
+|	ELDTS 구현을 위해 필요한 변수와 Flag 를 선언한 공통 헤더							           |
+|                                                                              |
+| 2. 소속 함수                                                                     |
+|																			   |
+| 3. Routine Tree                                                              |
+|                                                                              |
++------------------------------------------------------------------------------*/
+#include    <time.h>			//Time
+#include    <stdio.h>			// Standard IN OUT
+#include    <stdlib.h>		// Standard Library
+#include    <stdarg.h>
+#include    <string.h>		// String
+#include    <errno.h>		// Error
+#include    <unistd.h>	
+#include    <signal.h>		// Signal
+#include 	 <fcntl.h>         		// O_WRONLY
+//#include    <ctype.h>
+#include    <pthread.h>		// Thread
+#include	 <termios.h>                   // B115200, CS8 등 상수 정의
+
+#include    <arpa/inet.h>		// for TCP/IP
+#include    <sys/socket.h>	// for Socket Com
+#include	 <sys/poll.h>
+#include 	 <sys/ioctl.h>
+#include    <sys/types.h>
+#include    <sys/ipc.h>		// Inter processor communication
+#include    <sys/msg.h>		// Message
+#include    <sys/shm.h>		// Share memory
+#include 	 <sys/mman.h>	//memory management
+#include    <linux/i2c-dev.h>
+
+#include	"FPGA_Config.h"
+
+#pragma pack(1)
+
+//#define	LAN_TEST		1
+
+#define	NEW_PROTO			1
+
+#define	FOR_TEST			0
+#define	FOR_DEBUG			0
+#define	FOR_OPC_DEBUG		0
+#define	FOR_MC_DEBUG		0
+#define	FOR_SSC_DEBUG		0
+#define	FOR_DTS_DEBUG		0
+#define	FOR_CREATE_QUE	0
+#define	FOR_COM			0
+#define	FOR_LINUX		1
+#define	FOR_UDP			0
+#define	FOR_EMI			1
+#define	FOR_UART_LED	0
+#define FOR_ROUTE 		0 // RBC 인터페이스 시 '1'설정
+#define	FOR_HOST_ROUTE	0
+#define	FOR_RBC_IF		0 // RBC 인터페이스 시 '1'설정
+//#define 	FOR_DTS_CH_EXT 	1
+
+#define SUBWAY_TYPE	    0			// 하남선, 신내 적용 
+
+/*=============================================================================+
+|		Type definition 														|
++==============================================================================*/
+typedef unsigned char		uchar;
+typedef unsigned int		uint;
+typedef unsigned long		ulong;
+typedef unsigned short		ushort;
+
+
+/*=============================================================================+
+|		수정이력 기록																	|
++==============================================================================*/
+
+#define COMM_MMI_FUNC_INDICATION		0x21U	/** 상태변화 메시지 */
+#define COMM_MMI_FUNC_BASESCANRSP		0x61U	/** Basescan 응답 메시지 */
+
+#define TRNO_INDICATION					0xA5U	/** 열번 상태 변화 정보 */
+#define TRNO_BASESCAN					0x5AU	/** 열번 Basescan */
+
+/*=============================================================================+
+|		Time define 															|
++==============================================================================*/
+#define     SEC                     1
+#define     SECS_FOR_MIN            (time_t) (SEC * 60)
+#define     SECS_FOR_HOUR           (time_t) (SECS_FOR_MIN * 60)
+#define     SECS_FOR_DAY            (time_t) (SECS_FOR_HOUR * 24)
+#define     START_YEAR              1970
+#define     START_WDAY              3       /* 0: WEDNESDAY , 1970, 1, 1*/
+#define     DAYS_FOR_WEEK           7
+#define     LEAP_DAYS               29
+#define     NORMAL_DAYS             28
+#define     DAYS_FOR_LEAP_YEAR      366
+#define     DAYS_FOR_NORMAL_YEAR    365
+
+#define		POLL_CYCLE				1500     /* 2ms * 1500 = 3sec */
+
+/*=============================================================================+
+|		Msg Buffer define																														 |
++==============================================================================*/
+#define		NumOf_Queue		200
+#define		NumOf_Sema		30
+
+#define  	KEY_ILDB     	5959
+#define  	KEY_RING     	9600
+#define  	KEY_NUM     	1234
+#define  	KEY_FPGA     	4321
+#define  	KEY_FPGA2     	14321
+#define  	KEY_FPGA3     	20201
+#define  	KEY_FPGA4     	34741
+#define  	KEY_RING1     	5678
+#define  	KEY_RING2     	8765
+#define  	KEY_DPRAM_A    	7676
+#define  	KEY_DPRAM_B    	9898
+#define  	MAX_TASK_NUM	30
+#define     MAX_MSG_LENGTH  1024	
+#define		Data_Length		0xFF
+#define		MAX_SIZE		1037				// 13 + MAX_MSG_LENGTH
+#define		BUF_SIZE		1024
+	
+// 사용자가 정의하지 않음, TSIO 
+#define 		MODEM_COMPILE
+#define 		MODEM_MODE	1
+
+/* 신규 LDTS에서 CRC 계산 시 high와 low가 바껴서 나오므로
+   func_LowB와 func_HighB를 바꾸었음 2005년 7월 13일 */
+#define 	func_HighB(x)   (uchar) ((x >> 8) & 0xff)
+#define 	func_LowB(x)	(uchar) (x & 0xff)
+	
+//#define 		func_HighB(x)   (uchar) (x & 0xff)					// 20160614 
+//#define 		func_LowB(x)		(uchar)((x >> 8) & 0xff)			//20160614
+#define		func_Set_B(data, bitnumber)                 ( (data) |= (0x01 << (bitnumber) ))
+#define		func_Clear_B(data, bitnumber)              ( (data) &= ~(0x01 << (bitnumber) ))
+
+/*=============================================================================+
+|		DPRAM Tx/Rx flag														|
++==============================================================================*/
+#define		RX_FLAG		0x55
+#define		TX_FLAG		0xAA
+
+/*=============================================================================+
+|		Message sender flag														|
++==============================================================================*/
+#define		CPU_1ST		0x10
+#define		CPU_2ND		0x20
+	
+/*=============================================================================+
+|		Line Check Flag define												 |
++==============================================================================*/
+// Line Status define
+#define		BOTH_CH_GOOD		0x00	// 1,2 라인 모두 정상
+// Good
+#define		CH_OPC_1_GOOD		0x00	// OPC 1 라인 정상
+#define		CH_OPC_2_GOOD		0x00	// OPC 2 라인 정상
+#define		CH_MTC_1_GOOD		0x00	// MTC 1 라인 정상
+#define		CH_MTC_2_GOOD		0x00	// MTC 2 라인 정상
+#define		CH_DTS_1_GOOD		0x00	// DTS 1 라인 정상
+#define		CH_DTS_2_GOOD		0x00	// DTS 2 라인 정상
+#define		CH_RC_1_GOOD		0x00	// RC 1 라인 정상
+#define		CH_RC_2_GOOD		0x00	// RC 2 라인 정상
+#define		CH_DUAL_1_GOOD		0x00	// DUAL 1 라인 정상
+#define		CH_DUAL_2_GOOD		0x00	// DUAL 2 라인 정상
+	
+// Bad
+#define		CH_OPC_1_BAD		0x10	// OPC 1 끊김
+#define		CH_OPC_2_BAD		0x01	// OPC 2 끊김
+#define		CH_MTC_1_BAD		0x20	// MTC 1 끊김
+#define		CH_MTC_2_BAD		0x02	// MTC 2 끊김
+#define		CH_DTS_1_BAD		0x40	// DTS 1 라인 끊김
+#define		CH_DTS_2_BAD		0x04	// DTS 2 라인 끊김
+#define		CH_RC_1_BAD		0x80	// RC 1 라인 정상
+#define		CH_RC_2_BAD		0x08	// RC 2 라인 정상
+#define		CH_DUAL_1_BAD		0xF0	// DUAL 1 라인 정상
+#define		CH_DUAL_2_BAD		0x0F	// DUAL 2 라인 정상
+
+/*=============================================================================+
+|		Common Flag define																														 |
++==============================================================================*/
+#define 		MAX_RETRY		3
+#define		ReseT						0x00
+#define		reset						0x00
+#define		SeT							0x01
+#define		set							0x01
+#define		Open						0x00
+#define		Block						0x01
+#define		All_Disable			0x00
+#define		All_Enable			0x11
+#define		Tx_Enable				0x10
+#define		Rx_Enable				0x01
+#define		RxSeqSet			0x55
+#define 		func_Checksum(x, y)  ((uint) x - (uint) y)
+#define		func_ChecksumChar(x, y)		((uchar) x - (uchar) y)
+	
+#define MAX_RING            8
+#define EthMAX_RING            24
+#define RING_DATA_SIZE      1024
+#define Forever    0xffff
+	
+//#define EOF	-1
+	
+#define YES      1
+#define NO       0
+#define	Reserved 0
+	
+#define ESC     27
+#define BS       8
+#define DEL    127
+	
+	
+typedef void*		(*start_routine)(void *);
+typedef	struct {
+	int	status;
+}THREAD_PARAM;
+
+#define SYSFS_GPIO_DIR "/sys/class/gpio"
+#define MAX_BUF 64
+#define GPIO_OUTPUT 0
+#define GPIO_INPUT 1
+#define GPIO_HIGH  1
+#define GPIO_LOW  0
+#define GPIO_NUM   3
+
+typedef enum {
+	GPIO_NONE,
+	GPIO_RUN_STATUS,
+	GPIO_SEGMENT_7,
+	GPIO_DO,
+	GPIO_DI,
+	GPIO_UART_HDLC,
+	GPIO_HDLC_TYPE,
+	GPIO_VME_CLIENT,
+	GPIO_VME_MASTER_DTACK,
+	GPIO_VME_MEMORY_SIZE,
+	GPIO_VME_DTACK_CLEAR,
+	GPIO_DIPSW,	
+	//GPIO_VME_PATTERN
+} gpio_type_e;
+
+/*-----------------------------------------------------------------------------+
+|	각 라인의 Acitve/ Passive Flag					   |
++------------------------------------------------------------------------------*/
+
+typedef struct{
+	int	Line_stat;
+}LINE_STAT;
+
+
+/*-----------------------------------------------------------------------------+
+|	송, 수신 frame를 PAC port에 뿌릴지에 대한 flag 상태 					   |
++------------------------------------------------------------------------------*/
+typedef
+enum	{
+		ViewOn			= 0x1234,
+		ViewOff 		= 0x5678
+}		view_state;
+
+/*-----------------------------------------------------------------------------+
+| 통신 channel의 번호를 나타내는 정의										   |
++------------------------------------------------------------------------------*/
+typedef
+enum	{
+	Channel1 = 0x01,  
+	Channel2 = 0x02,
+	Channel3 = 0x03,	
+	Channel4 = 0x04,
+ 	Channel5 = 0x05,
+	Channel6 = 0x06,  
+	Channel7 = 0x07,  
+	Channel8 = 0x08,  
+}	channel_no;
+	
+/*=============================================================================+
+|		For CRC check																															 |
++==============================================================================*/
+typedef union
+{
+	struct for_crc
+	{
+		uint	i1	:	1;
+		uint	i2	:	1;
+		uint	i3	:	1;
+		uint	i4	:	1;
+		uint	i5	:	1;
+		uint	i6	:	1;
+		uint	i7	:	1;
+		uint	i8	:	1;
+	}crc_bit;
+	
+  uchar data;
+}ForCrc;
+
+	
+typedef union
+{
+	struct for_crcc
+	{
+		uint		i1 : 1;
+		uint		i2 : 1;
+		uint		i3 : 1;
+		uint		i4 : 1;
+		uint		i5 : 1;
+		uint		i6 : 1;
+		uint		i7 : 1;
+		uint		i8 : 1;
+	} crc_bitt;
+	uchar dataa;
+}ForCrcc;
+
+	
+/*=============================================================================+
+|		CPU & I/O status																													 |
++==============================================================================*/
+typedef
+enum	{
+	Online				= 0,
+	Level_Low		= 0,
+	Not_Changed 	= 0,
+	Offline 				 ,
+	Level_High		= 1,
+	Level_Changed = 1
+}	RunningStatus ;
+
+
+typedef
+enum	{
+	Primary 	= 0,
+	Secondary	= 1 	
+}	CPU_state ;
+
+typedef enum	{
+	Running  =	0x10,
+	Pri_set  =		0x01,
+	Sec_set  =	0x01,
+	Cpustate =	0x01,
+	LdmState =	0x02,
+}	system_sts;
+
+
+typedef
+enum	{
+	InActive		= 0x00,
+  	Die			= 0x00,
+	Active		= 0x01,
+	Alive			= 0x01, 
+}	module_state;
+
+typedef
+enum	{
+	Not_Defined 	= 0x00,
+	Line_Active	= 0x01,
+  	Line_Passive	= 0x02,
+}Master_Line_state;
+
+	
+typedef
+enum	{
+	NoChange = 0 ,
+	Change = 1
+}	ChangeStatus;
+
+
+typedef enum
+{
+	Test0Port	= 0,
+	Test1Port	= 1,
+	Test2Port	= 2,
+	Test3Port	= 3,
+	Test4Port	= 4,
+	Test5Port	= 5,
+	Test6Port	= 6,
+	Test7Port	= 7,
+	Test8Port	= 8,
+} octal_port_assign;
+
+typedef enum
+{
+	Port0	= 0,
+	Port1,
+	Port2,
+	Port3,
+	Port4,
+	Port5,
+	Port6,
+	Port7,
+	Port8,
+} Port;
+
+/*=============================================================================+
+|		Task ID 															|
++==============================================================================*/
+typedef enum
+{
+//	DRV_TASK = 0,
+	LAN_TASK = 0,
+	VME_TASK,	
+	YRC_TASK,	
+	SYS_TASK,
+	VME_TASK2,			
+	BUG_TASK,		// User Task
+} TASK_ID;
+
+typedef struct{
+	int 		TaskId;
+	int 		TaskNum;
+	uchar	TaskName[20];
+	int 		State;
+	int 		RestartCnt;
+	uchar	StTime[20];
+	uchar	TaskStatus;
+	uchar	AliveFlag;
+}TASK_INFO;
+
+typedef enum
+{
+	OPC_Pri_Line=0,		// OPC 1 Line 상태 
+	OPC_Sec_Line,		// OPC 2 Line 상태 
+	MTC_Pri_Line,		// MTC 1 Line 상태 
+	MTC_Sec_Line,		// MTC 2 Line 상태 
+	DTS_Pri_Line,		// DTS 1 Line 상태 
+	DTS_Sec_Line,		// DTS 2 Line 상태 
+	RC_Pri_Line,		// RC 1 Line 상태 
+	RC_Sec_Line,		// RC 2 Line 상태 
+	DUAL_Pri_Line,		// 이중화 1 Line 상태 
+	DUAL_Sec_Line,		// 이중화 2 Line 상태 
+	
+#if FOR_RBC_IF		
+	RBC_Pri_Line,		// 이중화 1 Line 상태 
+	RBC_Sec_Line,		// 이중화 2 Line 상태 	
+#endif	
+
+	EndofLineStat,
+}LineStat;
+
+typedef struct
+{
+	int 	Line_ID;
+	uchar	Line_Name[25];
+	uchar	Line_State;
+	uchar	Line_Mode;
+	uchar	StTime[20];
+}LINE_INFO;
+
+
+typedef struct
+{
+	int 	Device_ID;
+	uchar	Device_State[2];
+	uchar	Run_Mode;
+}FSC_Device_INFO;
+
+
+
+typedef struct
+{
+	uchar	StatChanged;
+}RETRY_INFO;
+
+typedef
+enum	{
+	OPC_Pri = 0x11,
+	OPC_Sec = 0x12,
+	MTC_Pri = 0x21,
+	MTC_Sec = 0x22,
+	DTS_Pri = 0x31,
+	DTS_Sec = 0x32,
+	RC_Pri = 0x41,
+	RC_Sec = 0x42,
+	DUAL_Pri = 0x81,
+	DUAL_Sec = 0x82,
+	Serial_1 = 0xD1,
+	Serial_2 = 0xD2,
+	Serial_3 = 0xD3,
+	Serial_4 = 0xD4,
+	Serial_5 = 0xD5,
+	Serial_6 = 0xD6,
+	Serial_7 = 0xD7,
+	Serial_8 = 0xD8,	
+}	LOG_CH_INFO;	
+
+
+typedef
+enum	{
+	RXD = 0,
+	TXD = 1,
+}	LOG_CH_Type;	
+
+
+/*=============================================================================+
+|		Queue ID																																	 |
++==============================================================================*/
+typedef
+enum
+{
+	/*--- CPU MODULE ---*/
+	TASK_STAT_QUE = 0,
+	Debug_TX_QUE,
+	Debug_RX_QUE,
+	V_QUEUE,
+	/*--- Serial COMM ---Start : 4*/
+	COM1_TX_QUE = 4,			// CPU Dual
+	COM1_RX_QUE,			// CPU Dual
+	COM2_TX_QUE,
+	COM2_RX_QUE,
+	COM3_TX_QUE,
+	COM3_RX_QUE,
+	COM4_TX_QUE,
+	COM4_RX_QUE,
+	COM5_TX_QUE,
+	COM5_RX_QUE,
+	COM6_TX_QUE,
+	COM6_RX_QUE,
+	COM7_TX_QUE,
+	COM7_RX_QUE,
+	COM8_TX_QUE,			
+	COM8_RX_QUE,
+	/*--- Socket COMM  ---Start : 20*/
+	OPC1_TX_QUE = 20,
+	OPC1_RX_QUE,
+	MTC1_TX_QUE,
+	MTC1_RX_QUE,
+	DTS1_TX_QUE,
+	DTS1_RX_QUE,
+	RC1_TX_QUE, 
+	RC1_RX_QUE, 
+	YRC1_TX_QUE, 
+	YRC1_RX_QUE, 		
+	DUAL1_TX_QUE, 
+	DUAL1_RX_QUE, 	
+	/*--- MESSAGE QUEUE ---Start : 30*/
+	OPC2_TX_QUE = 32,
+	OPC2_RX_QUE,
+	MTC2_TX_QUE,
+	MTC2_RX_QUE,
+	DTS2_TX_QUE,
+	DTS2_RX_QUE,
+	RC2_TX_QUE, 
+	RC2_RX_QUE, 
+	YRC2_TX_QUE, 
+	YRC2_RX_QUE, 	
+	DUAL2_TX_QUE, 
+	DUAL2_RX_QUE,
+	RC_RESP_QUE, 
+	RC_IND_QUE,		
+	RBC1_TX_QUE,
+	RBC2_TX_QUE,	
+	EndofQueueID,
+} QUEUE_ID;
+
+	
+/*=============================================================================+
+|		View Queue ID																																	 |
++==============================================================================*/
+typedef
+enum
+{
+	/*--- Serial COMM MESSAGE QUEUE for Debug---Start : 100 */
+	VQUETX1 = 100,	 /* 					 */
+	VQUETX2,   /*					   */
+	VQUETX3,	/*						*/
+	VQUETX4,   /*					   */
+	VQUETX5,   /*					   */
+	VQUETX6,   /*					   */
+	VQUETX7,   /*					   */
+	VQUETX8,   /*					   */
+	VQUERX1,   /*					   */
+	VQUERX2,   /*					   */
+	VQUERX3,   /*					   */
+	VQUERX4,   /*					   */
+	VQUERX5,   /*					   */
+	VQUERX6,   /*					   */
+	VQUERX7,   /*					   */
+	VQUERX8,   /*					   */
+	/*--- Socket COMM MESSAGE QUEUE for Debug ---Start : 116 */
+	VQUETX_OPC1 = 116,
+	VQUETX_OPC2,
+	VQUETX_MTC1,
+	VQUETX_MTC2,
+	VQUETX_DTS1,
+	VQUETX_DTS2,
+	VQUETX_RC1,
+	VQUETX_RC2,
+	VQUETX_DUAL1,
+	VQUETX_DUAL2,
+	VQUERX_OPC1,
+	VQUERX_OPC2,
+	VQUERX_MTC1,
+	VQUERX_MTC2,
+	VQUERX_DTS1,
+	VQUERX_DTS2,
+	VQUERX_RC1,
+	VQUERX_RC2,
+	VQUERX_DUAL1,
+	VQUERX_DUAL2,
+	/*		151 	*/
+} V_QUEUE_ID;
+
+/*=============================================================================+
+|		View Flags																															 |
++==============================================================================*/
+
+
+typedef
+enum	{
+	RealDataView = 0,
+	TxChannel1 = 0, 	
+    TxChannel2, 
+	TxChannel3,
+	TxChannel4,
+	TxChannel5,
+	TxChannel6,
+	TxChannel7,
+	TxChannel8,
+	RxChannel1,	
+	RxChannel2,    
+	RxChannel3,	
+	RxChannel4,
+	RxChannel5,
+	RxChannel6,
+	RxChannel7,
+    RxChannel8,
+    EndChannel,
+}	ring_no;
+
+typedef
+enum	{
+	DpramRealDataView = 0,
+	TxDPRAM1 = 0, 	
+    TxDPRAM2, 
+	TxDPRAM3,
+	TxDPRAM4,
+	TxDPRAM5,
+	TxDPRAM6,
+	TxDPRAM7,
+	TxDPRAM8,
+	RxDPRAM1,	
+	RxDPRAM2,    
+	RxDPRAM3,	
+	RxDPRAM4,
+	RxDPRAM5,
+	RxDPRAM6,
+	RxDPRAM7,
+    RxDPRAM8,
+    EndDPRAM,
+}	dpr_ring_no;
+
+typedef
+enum	{
+	SockRealDataView = 0,
+	TxCh_Sock1 = 0, 		//	OPC1
+	TxCh_Sock2, 		//	OPC2
+	TxCh_Sock3, 		//	MTC1
+	TxCh_Sock4, 		//	MTC2	
+	TxCh_Sock5,			//	DTS1 
+	TxCh_Sock6, 		//	DTS2
+	TxCh_Sock7, 		//	RC1
+	TxCh_Sock8,			//	RC2	
+	TxCh_Sock9, 		//	DUAL1
+	TxCh_Sock10, 		//	DUAL1	
+	TxCh_Sock11, 		//	RBC1
+	TxCh_Sock12, 		//	RBC2	
+		
+	RxCh_Sock1, 		//	OPC1
+	RxCh_Sock2, 		//	OPC2
+	RxCh_Sock3, 		//	MTC1
+	RxCh_Sock4, 		//	MTC2
+	RxCh_Sock5,			//	DTS1 
+	RxCh_Sock6, 		//	DTS2
+	RxCh_Sock7,			//	RC1
+	RxCh_Sock8,			//	RC2	
+	RxCh_Sock9, 		//	DUAL1
+	RxCh_Sock10, 		//	DUAL2 
+	RxCh_Sock11, 		//	RBC1
+	RxCh_Sock12, 		//	RBC2 	
+	SockEndChannel,
+}	Sock_ring_no;
+
+
+typedef
+enum	{
+	DebugView = 0,
+	LAN_Debug,		//   LAN_TASK debug
+	VME_Debug,		//	VME_TASK debug
+	DRV_Debug,		//	DRV_TASK debug
+	CPU_Debug,
+	RC_Debug,	
+	DebugEndChannel,
+}	Debug_ring_no;
+
+
+/* View Queue List for Extention Board(COM) */
+#define		TXDEBUG		Debug_TX_QUE
+#define		RXDEBUG		Debug_RX_QUE
+#define 	TXQUE1		COM1_TX_QUE
+#define 	RXQUE1		COM1_RX_QUE
+#define 	TXQUE2		COM2_TX_QUE
+#define 	RXQUE2		COM2_RX_QUE
+#define 	TXQUE3		COM3_TX_QUE
+#define 	RXQUE3		COM3_RX_QUE
+#define 	TXQUE4		COM4_TX_QUE
+#define 	RXQUE4		COM4_RX_QUE
+#define 	TXQUE5		COM5_TX_QUE
+#define 	RXQUE5		COM5_RX_QUE
+#define 	TXQUE6		COM6_TX_QUE
+#define		RXQUE6		COM6_RX_QUE
+#define 	TXQUE7		COM7_TX_QUE
+#define 	RXQUE7		COM7_RX_QUE
+#define		TXQUE8		COM8_TX_QUE  
+#define 	RXQUE8		COM8_RX_QUE    
+
+/* View Queue List for Socket COMM (CPU Ethernet) */
+#define 	TXOPC1		OPC1_TX_QUE
+#define 	RXOPC1    	OPC1_RX_QUE
+#define 	TXMTC1    	MTC1_TX_QUE
+#define 	RXMTC1    	MTC1_RX_QUE
+#define 	TXDTS1		DTS1_TX_QUE
+#define 	RXDTS1    	DTS1_RX_QUE
+#define 	TXRC1    	RC1_TX_QUE
+#define 	RXRC1    	RC1_RX_QUE
+#define 	TXDUAL1    	DUAL1_TX_QUE
+#define 	RXDUAL1    	DUAL1_RX_QUE
+#define 	TXOPC2    	OPC2_TX_QUE
+#define 	RXOPC2    	OPC2_RX_QUE
+#define 	TXMTC2	 	MTC2_TX_QUE
+#define 	RXMTC2		MTC2_RX_QUE
+#define 	TXDTS2    	DTS2_TX_QUE
+#define 	RXDTS2    	DTS2_RX_QUE
+#define 	TXRC2		RC2_TX_QUE
+#define 	RXRC2		RC2_RX_QUE
+#define 	TXDUAL2		DUAL2_TX_QUE
+#define 	RXDUAL2		DUAL2_RX_QUE
+
+
+/*=============================================================================+
+|		Error																	|
++==============================================================================*/
+typedef enum	{
+	Ok = 0x0,					// 정상적인 처리
+	Bad = 0xFF, 				// 비정상적인 처리
+	NotFound = 0xA1,			// 지정된 것을 못찾음.
+	LengthErr,				// 수신된 정보의 길이가 지정된 범위에 맞지 않음
+	PortErr,					// 잘못된 port의 access 
+	CrcErr, 					// 수신된 CRC의 값이 옳바르지 못함
+	TimeOutErr, 				// 지정된 시간내에 정보를 수신하지 않음
+	OpCodeErr,				// 정보의 op code가 맞지 않음
+	BufferFullErr,				// 더이상 buffer에 추가 불능
+	BufferEmptyErr, 			// buffer에 data가 업음
+	CalCrcErr,				// CRC 생성이 잘못 되었을 때
+	StxErr, 					// 수신된 STX Field 에 STX 가 맞지 않음
+	SubOpcodeErr,			// 정보의 sub opcode가 맞지 않음
+	DataCodeErr,				// 정보의 data가 맞지 않음
+	RetryErr,					// 재시도 error
+	EtxErr, 					// 수신된 ETX Field 에 ETX 가 맞지 않음  
+	SeqErr, 					// Sequence error
+}	error;
+
+/*=============================================================================+
+|		Communication Protocol define																							 |
++==============================================================================*/
+/****************** Header and Tailer ******************/
+typedef enum
+{
+	Stx = 0x02, 			// Msg Stx
+	Etx = 0x03, 			// Msg Etx
+}Msg_Field_defined;
+
+
+/****************** OP code ******************/
+typedef enum
+{
+	/* ============ Common ============ */
+	AYT 						= 0xAC, // AYT
+	ACK 						= 0xA0, // ACK
+	NAK 						= 0xA7, // NAK
+}Msg_OPcode_defined;
+
+	
+/****************** Sub OP code ******************/
+typedef enum
+{
+	CON_OP_MODE = 0x1, // 운영 모드 절체
+	CON_OP_SW	= 0x2, // 선로전환기 제어
+	CON_OP_RO	= 0x3, // 진로 설정 및 해정
+	CON_OP_ETK	= 0x4, // 궤도 비상 해정
+	CON_OP_TSR	= 0x5, // 임시속도제한 설정 및 해정
+	CON_OP_EMS	= 0x6, // 비상정지 설정 및 해정
+}Msg_SubOP_defined;
+	
+
+/****************** Indication Type for Simulator ******************/
+typedef enum
+{
+	IND_MODE	= 0x0, // 운영모드 상태정보
+	IND_SIG		= 0x1, // 신호기 상태정보
+	IND_SW		= 0x2, // 선로전환기 상태정보
+	IND_RO		= 0x3, // 진로 상태정보
+	IND_TD		= 0x4, // 궤도 상태정보
+	IND_TRS		= 0x5, // 임시속도제한 상태정보
+	IND_EMS		= 0x6, // 비상정지 상태정보
+	IND_DL		= 0x7, // 정차등 (Dwell Light) 상태정보
+	IND_EIE		= 0x8, // 전자연동장치 상태정보
+	IND_PW		= 0x9, // 전원장치 상태정보
+}Msg_Indication_defined;
+
+
+/****************** Schedule Type ******************/
+typedef enum
+{
+	WeekDay 	= 0x31, // 평일
+	WeekEnd 	= 0x32, // 주말
+	HoliDay		= 0x33, // 휴일, 일요일
+	SpecialDay	= 0x34, // 특정일
+	LineDown	= 0x35, // 불통
+}SCH_Type_defined;
+
+typedef struct{
+	long    data_type;
+	uchar	Stx;
+	uchar	Length;
+	uchar	Seq;
+	uchar	Opcode;
+	uchar	Data[MAX_MSG_LENGTH]; /* crc, etx 포함 */
+}NEW_COMM_MSG;
+
+typedef struct{
+	long  data_type;					// Data Type 이 CR or CC 인 경우 0x01, Datagram 인경우 0x02
+	uchar	S_Data[MAX_MSG_LENGTH]; 	// Test Data
+}S_COMM_MSG;
+
+
+typedef struct{
+	long    data_type;					// Data Type 이 CR or CC 인 경우 0x01, Datagram 인경우 0x02
+	uchar	H_STX;						// Packet Header , STX
+	uchar	H_SenderID;					// Sender ID	
+	uchar	H_ReceiverID;				// Receiver ID		
+	uchar	H_SEQ;						// Seq#
+	uchar	H_OP_CODE;					// function code ID
+	uchar	H_LENGTH[2];				// Length = H_SenderID ~ Data[var]
+	uchar 	D_Data[MAX_MSG_LENGTH]; 	// User Data Part, Max Data Size (1024 - 9) bytes, include CRC32(4) and ETX
+}COMM_MSG;								// Total 11 + 1024(max) bytes
+
+typedef struct {
+	long    data_type;			// Data Type 이 CR or CC 인 경우 0x01, Datagram 인경우 0x02	
+	uchar 	ucSTX;				/** 0, 메시지 프레임의 시작 문자, STX=0x02 고정값 */
+	uchar	ucSenderID;			/** 1, 메시지 프레임의 발신자 ID */
+	uchar	ucReceiverID;		/** 2, 메시지 프레임의 수신자 ID */
+	uchar	ucSequenceNo;		/** 3, 메시지 프레임의 순서번호, 0x04~ox7F, 단, Initial Polling 메시지는 0x00  */
+	uchar	ucFunctionCode;		/** 4, 메시지 프레임의 기능코드 */
+	ushort	usLength;			/** 5~6, 메시지 프레임의 데이터 사이즈, 발신자 ID 부터 CRC 필드(Field) 이전의 데이터 필드(Field)까지의 Byte Size */		
+	uchar 	ucData[MAX_MSG_LENGTH]; 	
+	uchar	ucCRC32[4];			/** data low => uchCRC32[0], data high => uchCRC32[3] */	
+	uchar 	ucETX;				/** 11, 메시지 프레임의 종료 문자, ETX=0x03 고정값 */
+} COMM_MSG_FRAME;
+
+
+typedef struct{
+	long    data_type;
+	uchar	Length;
+	uchar	Data[250]; /* crc, etx 포함 */
+}NEW_INTER_MSG;
+
+typedef struct{
+	long    data_type;
+	int		date_length;
+	uchar	Data[MAX_MSG_LENGTH+6];	
+}INTER_MSG;
+
+typedef struct{
+	long    data_type;
+	uchar	Data[2]; 
+}STATUS_MSG;
+
+typedef struct{
+	long    data_type;
+	uchar	Data; 
+}CHAR_MSG;
+
+typedef struct{
+	long    data_type;
+	uchar	Data[MAX_MSG_LENGTH+6]; 
+}WORD_MSG;
+
+typedef struct lingerStruct
+{
+	 int l_onoff;						 // linger 옵션 설정(l_onoff = 1), 해제(l_onoff=0)
+	 int l_linger;						 // linger timeout
+}LINGER;							// SO_LINGER 옵션 구조체
+
+
+/*-----------------------------------------------------------------------------+
+|	사용중 인지 아닌지를 나타내는 flag의 상태								   |
++------------------------------------------------------------------------------*/
+typedef
+enum	{
+	Usable		= 0,
+	InUse,
+	UnUsable	= -1
+}	use;
+
+/*-----------------------------------------------------------------------------+
+|	변수의 position 														   |
++------------------------------------------------------------------------------*/
+typedef
+enum	{
+	NonArray		  = 1,	  /* 변수가 array가 아니다.*/
+	VarNamePosEach	  = 3,
+	VarNamePos		  = 5,	  /* 발생한 변수의 이름의 화면 위치*/
+	VarArrayPosEach   = 36,   /* array의 번호를 쓸 위치*/
+	VarArrayPos 	  = 40,   /* array의 번호를 쓸 위치*/
+	VarValuePosEach   = 41,   /* 변수의 값에 의한 설명을 쓸 위치*/
+	VarHexPos		  = 44,   /* 16진수의 값을 쓸 위치*/
+	VarValuePos 	  = 45,   /* 변수의 값에 의한 설명을 쓸 위치*/
+	VarDecPos		  = 52,   /* 10진수의 값을 쓸 위치*/
+	VarMsgSize		  = 82,   /* 하나의 변수 message의 총길이*/
+	VarFileCirculated,
+	VarMsgEntries	  = 100,/* 관리할 변수 message의 총 갯수*/
+	MaxVarSize		  = 256 /* array일 경우 최대 갯수*/
+}	var_position;
+
+
+/*-----------------------------------------------------------------------------+
+| 송, 수신 frame를 PAC port에 뿌리기 위한 format							   |
++------------------------------------------------------------------------------*/
+typedef
+enum	{
+	ViewCountPos	= 1,
+	ViewDataWidth	= 3,
+	ViewChannelPos	= 3,
+	ViewTxRxPos 	= 6,
+	ViewDataPos2	= 4,	
+	ViewBoundary	= 7,
+	ViewDataPos 	= 9,
+	ViewLineEntries = 16,
+	ViewAsciiPos	= 59,
+	ViewContents	= 76,
+	ViewDataLength	= 13+MAX_MSG_LENGTH,
+}	viewdata;
+
+
+/*-----------------------------------------------------------------------------+
+|	variable data에서 사용													   |
++------------------------------------------------------------------------------*/
+typedef
+enum	{
+	Single			= 0 ,	/* VAR_ATTR의 size field*/
+							/* VAR_ATTR의 operating의 operand field*/
+	Bit 				,	/* 각 bit마다 의미를 가진경우*/
+	Ordinary			,	/* 해당 값 자체가 의미를 갖는 경우*/
+	NonDecode			,	/* 값 자체를 ascii로 바꾸어 주는 경우*/
+}		operating;
+/*-----------------------------------------------------------------------------+
+|	전송 상태 -- variable data에서 사용 									   |
++------------------------------------------------------------------------------*/
+
+typedef enum{
+	UARTCh01 = 1, 	
+	UARTCh02 = 2, 	
+	UARTCh03 = 3,	
+	UARTCh04 = 4,	
+	UARTCh05 = 5, 	
+	UARTCh06 = 6, 	
+	UARTCh07 = 7,		
+	UARTCh08 = 8,	
+}UARTChType;
+
+/*-----------------------------------------------------------------------------+
+| 이부분은 위의 error에 define해도 되나 assembley로 작성된 interrupt		   |
+| service routine과 공유해야하는 부분이므로 분리해서 관리					   |
++------------------------------------------------------------------------------*/
+typedef
+enum	{
+	FormatErr	= 0x01,
+	ChecksumErr = 0x10,
+	FrameErr	= 0x20,
+	OverrunErr	= 0x40,
+	BreakErr	= 0x80
+}	comm_err;
+
+/*-----------------------------------------------------------------------------+
+| error message 내의 각 위치												   |
++------------------------------------------------------------------------------*/
+typedef
+enum	{
+	RoutinePos		= 0,   /* error가 발생한 routine의 이름*/
+	ErrorKindPos	= 20,  /* enum으로 정의된 error*/
+	SpecificPos 	= 40,  /* ErrorKind 이외에 덧붙이고 싶은 message*/
+	TimePos 		= 61,	/* error가 발생한 시간*/
+	ErrMsgSize		= 84,	 /* error message의 총길이*/
+	ErrFileCirculated,
+	NextPointContinue,
+	ErrMsgEntries	= 256 /* 관리할 error message의 총 갯수*/
+}	error_position;
+
+#define 	MAX_ELEMENT_NUM		1024
+
+
+
+/*=============================================================================+
+|		System status table 																											 |
++==============================================================================*/
+typedef
+union
+{
+	struct
+	{
+	unsigned SystemChange : 1;	/* 비트#1 ~ #8 까지 바뀌면Change/Nochange */
+								/* 상태변화를 인지한 곳에서 Change하고 */
+								 
+	unsigned SystemSwitch : 1;	/* 계절체후 세트됨. */
+								 
+	unsigned CpuPriSts	  : 1;	/* Pri cpu의 상태를 나타냄 Alive/Die */
+								/* Self Process에서 갱신한다. */
+								 
+	unsigned CpuSecSts	  : 1;	/* Sec cpu의 상태를 나타냄 Alive/Die */
+								/* DstsDrv에서 갱신한다. */
+								 
+	unsigned reserved : 1;	/* bit3 reserved */
+								 
+	unsigned CpuDuty	  : 1;	/* bit2 현재 Running 중인 CPU를 나타냄. Pri/Sec */
+								 
+	unsigned MyLine 	  : 1;	/* bit1 현재 자신의 계를 나타낸다. Pri/Sec */
+								/* self process에서 갱신함. */
+								 
+	unsigned OtherCpuSts	: 1;  /* bit0 상대 CPU 의 통신 상태를 나타냄 Alive/Die */
+								/* CpuProc에서 갱신한다. */
+								 
+	unsigned EventSts	  : 1;	/* bit7상대 cpu의 건강 상태를 나타냄 Alive/Die */
+								/* self process에서 갱신한다. */
+								 
+	unsigned DropReq	  : 1;	/* bit6 계절체 요구 */
+		unsigned						: 6;
+	}	SSfield ;
+	uint	SSunion ;
+} StatusSystemUnion ;
+	
+	
+/*=============================================================================+
+|		FOR DRIVER TASK SPAWNING																									 |
++==============================================================================*/
+
+
+typedef 	struct	{
+			int 	port_name;
+			int 	size;
+			uchar	ch[ViewDataLength - 1];
+}	VIEW_LIST;
+
+/*-----------------------------------------------------------------------------+
+| ring buffer 의 내부 구조													   |
++------------------------------------------------------------------------------*/
+typedef struct		{
+	ushort		front_counter;				/* ring buffer에 data를 입력할 위치 */
+	ushort		rear_counter;				/* ring buffer에서 data를 출력할 위치*/
+	uchar	contents[RING_DATA_SIZE];	/* data*/
+}	RING_BUFFER;
+
+/*-----------------------------------------------------------------------------+
+|	각 변수 상태에 대한 설명												   |
++------------------------------------------------------------------------------*/
+typedef struct		{
+	int 	state_name;
+	char	state_explain[VarMsgSize];	/* 변수에 대한 ascii code*/
+}	VAR_STATUS;
+
+
+/*-----------------------------------------------------------------------------+
+|	변수 상태 구조및 속성													   |
++------------------------------------------------------------------------------*/
+typedef struct		{
+	void		*name;			/* 변수의 이름 */
+	int 		size;			/* 변수의 갯수*/
+	operating	operand;		/* bit operation인가?*/
+	int 		pass_num;		/* 가능한 가짓수 갯수*/
+	uchar		msg[VarMsgSize];/* 변수의 명 내용*/
+	VAR_STATUS	*var_status;	/* 변수의 상태*/
+}	VAR_ATTR;
+
+/*-----------------------------------------------------------------------------+
+|	각 port의 송, 수신 data의 관리를 위한 구조								   |
++------------------------------------------------------------------------------*/
+typedef struct		{
+	time_t		time;
+	int 		size;
+	uchar		ch[13+MAX_MSG_LENGTH];
+}	VIEW_MSG;
+
+
+/*-----------------------------------------------------------------------------+
+|	Log information for DT_logger													   |
++------------------------------------------------------------------------------*/
+typedef struct		{
+	long    data_type;  	
+	int 		size;
+	uchar	CH_INFO;
+	uchar	CH_TYPE;
+	uchar	    Data[13+MAX_MSG_LENGTH];
+}	LOG_INFORM;
+
+/*-----------------------------------------------------------------------------+
+|	View information														   |
++------------------------------------------------------------------------------*/
+#if FOR_LINUX
+typedef struct		{
+	long    data_type;  	
+	int			queue;
+	int 		size;
+	uchar	    ch[13+MAX_MSG_LENGTH];
+}	VIEW_INFORM;
+#else
+typedef struct		{
+	MessageQ_MsgHeader	reserved;
+	long	data_type;
+	int 		queue;
+	int 		size;
+	uchar		ch[13+MAX_MSG_LENGTH];
+}	VIEW_INFORM;
+#endif	
+
+
+/*-----------------------------------------------------------------------------+
+| 하나의 error message														   |
++------------------------------------------------------------------------------*/
+typedef struct	{
+	uchar		msg[ErrMsgSize];
+}	ERROR_MSG;
+
+/*-----------------------------------------------------------------------------+
+| 각 error의 종류에 대한 설명												   |
++------------------------------------------------------------------------------*/
+typedef struct		{
+	uchar		kind;				/* error 의 종류 */
+	char		explain[ErrMsgSize];/* error에 대한 ascii code */
+}	ERROR_INFORM;
+	
+/*-----------------------------------------------------------------------------+
+| error message를 관리하기 위한 ring 구조									   |
++------------------------------------------------------------------------------*/
+typedef struct		{
+	uchar		push_counter;	/* 다음에 넣을 error message의 위치*/
+	uchar		full;			/* ring이 채워졌는지를 나타내는 flag*/
+	uchar		time[22];
+	int 		reset_count;	/* reset 된 횟수의 관리*/
+	uint		checksum;		/* 모든 error message에 대한 checksum*/
+								/* battery backup 시 memory의 상태 check*/
+								/* 할때 사용*/
+	ERROR_MSG	entry[ErrMsgEntries];/* error message 자체*/
+}	ERROR_FILE;
+
+typedef struct qheader
+{
+   char *base;		   /* volatile version of qkheader.base    */
+   size_t width;	   /* volatile version of qkheader.width   */
+   int depth;		   /* volatile version of qkheader.depth   */
+   int putndx;		   /* internal use, initially = depth - 1  */
+   int curndx;		   /* internal use, initially = 0		   */
+   int *waiters;		/* priority list of waiting tasks		*/
+   int *dummy;			/* reserved - must follow *waiters		*/
+
+   unsigned int count; /* statistics - count */
+   int worst;		   /* statistics - worst case full level */
+} QHEADER;
+
+
+typedef struct {
+	int tm_sec; /* seconds after the minute - [0,59] */
+	int tm_min; /* minutes after the hour - [0,59] */
+	int tm_hour;	/* hours since midnight - [0,23] */
+	int tm_mday;	/* day of the month - [1,31] */
+	int tm_mon; /* months since January - [0,11] */
+	int tm_year;	/* years since 1900 */
+	int tm_wday;	/* days since Sunday - [0,6] */
+	int tm_yday;	/* days since January 1 - [0,365] */
+	int tm_isdst;	/* daylight savings time flag */
+}tm;
+
+
+typedef enum 
+{
+ 	COMM_FAIL = 0,
+
+} AlarmType;
+	
+typedef enum 
+{
+	ON=1, OFF /* sbkim */
+} OnOff;
+
+typedef struct	{
+	uchar		   name[8];
+	int 		   errNum;	
+}PORT_INFO;
+
+typedef struct	{
+	uchar		   name[20];
+	int 		   errNum;	
+}Socket_PORT_INFO;
+
+
+typedef struct	{
+	int   qid;
+	int      	   numMsgs;
+	uchar           name[15];
+}QUE_INFO;
+
+
+typedef struct	{
+	char *Control_Zone[8];	/* Board Section_Param(string) */
+	char Station_ID; 		/* Station ID 저장 */
+	char *Station_Name[15];	/* Station Name 저장 */
+	char *Station_Type[3];		/* Station Type 저장 */
+	/* Host IP */
+	char *Host_ip_0[16];		/* Ethernet 0 IP Address 저장 */
+	char *Host_ip_1[16];		/* Ethernet 1 IP Address 저장 */
+	char *Host_ip_2[16];		/* Ethernet 2 IP Address 저장 */
+	char *Host_ip_3[16];		/* Ethernet 3 IP Address 저장 */
+	char *Host_ip_4[16];		/* Ethernet 4 IP Address 저장 */
+	char *Host_ip_5[16];		/* Ethernet 5 IP Address 저장 */
+	/* Host Port */
+	char *Host_port_0[10];		/* Ethernet 0 port 저장 */
+	char *Host_port_1[10];		/* Ethernet 1 port 저장 */
+	char *Host_port_2[10];		/* Ethernet 2 port 저장 */
+	char *Host_port_3[10];		/* Ethernet 3 port 저장 */
+	char *Host_port_4[10];		/* Ethernet 4 port 저장 */
+	char *Host_port_5[10];		/* Ethernet 5 port 저장 */
+	/* Destination IP */
+	char *OPC1_Line_ip[16]; 		/* OPC 1 Line ip 저장 */
+	char *OPC2_Line_ip[16]; 		/* OPC 2 Line ip 저장 */
+	char *OPC1_Line_Other_ip[16]; 	/* OPC 1 Line ip 저장 */
+	char *OPC2_Line_Other_ip[16]; 	/* OPC 2 Line ip 저장 */	
+	char *MTC1_Line_ip[16]; 		/* MTC 1 Line ip 저장 */
+	char *MTC2_Line_ip[16]; 		/* MTC 2 Line ip 저장 */
+	char *MTC1_Line_Other_ip[16]; 	/* MTC 1 Line ip 저장 */
+	char *MTC2_Line_Other_ip[16]; 	/* MTC 2 Line ip 저장 */		
+	char *DTS1_Line_ip[16]; 		/* DTS 1 Line ip 저장 */
+	char *DTS2_Line_ip[16]; 		/* DTS 2 Line ip 저장 */
+	char *RC1_Line_ip[16]; 			/* RC 1 Line ip 저장 */
+	char *RC2_Line_ip[16]; 			/* RC 2 Line ip 저장 */
+	char *RC1_Line_Other_ip[16]; 	/* RC 1 Line ip 저장 */
+	char *RC2_Line_Other_ip[16]; 	/* RC 2 Line ip 저장 */		
+	char *DUAL1_Line_ip[16]; 		/* DUAL 1 Line ip 저장 */
+	char *DUAL2_Line_ip[16]; 		/* DUAL 2 Line ip 저장 */
+	char *RBC1_Line_ip[16]; 		/* RBC 1 Line ip 저장 */
+	char *RBC2_Line_ip[16]; 		/* RBC 2 Line ip 저장 */
+	char *RBC1_Line_Other_ip[16]; 	/* RBC 1 Line ip 저장 */
+	char *RBC2_Line_Other_ip[16]; 	/* RBC 2 Line ip 저장 */			
+	/* Destination Port */
+	char *OPC1_Line_Port[10];		/* OPC 1 Line Port 저장 */
+	char *OPC2_Line_Port[10];		/* OPC 2 Line Port 저장 */
+	char *OPC1_DST_Port[10];		/* OPC 1 Destination Port 저장 */
+	char *OPC2_DST_Port[10];		/* OPC 2 Destination Port 저장 */
+	char *OPC1_DST_Other_Port[10];	/* OPC 1 Destination Port 저장 */
+	char *OPC2_DST_Other_Port[10];	/* OPC 2 Destination Port 저장 */	
+	char *MTC1_Line_Port[10];		/* MTC 1 Line Port 저장 */
+	char *MTC2_Line_Port[10];		/* MTC 2 Line Port 저장 */
+	char *MTC1_DST_Port[10];		/* MTC 1 Destination Port 저장 */
+	char *MTC2_DST_Port[10];		/* MTC 2 Destination Port 저장 */
+	char *MTC3_Line_Port[10];		/* MTC 1 Line Port 저장 */
+	char *MTC4_Line_Port[10];		/* MTC 2 Line Port 저장 */
+	char *MTC3_DST_Port[10];		/* MTC 1 Destination Port 저장 */
+	char *MTC4_DST_Port[10];		/* MTC 2 Destination Port 저장 */	
+	char *DTS1_Line_Port[10];		/* DTS 1 Line Port 저장 */
+	char *DTS2_Line_Port[10];		/* DTS 2 Line Port 저장 */
+	char *DTS1_DST_Port[10];		/* DTS 1 Destination Port 저장 */
+	char *DTS2_DST_Port[10];		/* DTS 2 Destination Port 저장 */
+	char *RC1_Line_Port[10];		/* RC 1 Line Port 저장 */
+	char *RC2_Line_Port[10];		/* RC 2 Line Port 저장 */
+	char *RC1_DST_Port[10];			/* RC 1 Destination Port 저장 */
+	char *RC2_DST_Port[10];			/* RC 2 Destination Port 저장 */
+	char *RC1_DST_Other_Port[10];	/* RC 1 Destination Port 저장 */
+	char *RC2_DST_Other_Port[10];	/* RC 2 Destination Port 저장 */		
+	char *RBC1_Line_Port[10];		/* RBC 1 Line Port 저장 */
+	char *RBC2_Line_Port[10];		/* RBC 2 Line Port 저장 */
+	char *RBC1_Other_Line_Port[10];		/* RBC 1 Line Port 저장 */
+	char *RBC2_Other_Line_Port[10];		/* RBC 2 Line Port 저장 */	
+	char *RBC1_DST_Port[10];		/* RBC 1 Destination Port 저장 */
+	char *RBC2_DST_Port[10];		/* RBC 2 Destination Port 저장 */	
+	char *RBC1_DST_Other_Port[10];	/* RBC 1 Destination Port 저장 */
+	char *RBC2_DST_Other_Port[10];	/* RBC 2 Destination Port 저장 */	
+	char *DUAL1_Line_Port[10];		/* DUAL1 Line Port 저장 */
+	char *DUAL2_Line_Port[10];		/* DUAL 2 Line Port 저장 */
+	char *DUAL1_DST_Port[10];		/* DUAL 1 Destination Port 저장 */
+	char *DUAL2_DST_Port[10];		/* DUAL 2 Destination Port 저장 */
+}HOST_INFO;
+
+//extern HOST_INFO	Host_Info;
+
+typedef /* board와 주변 장치의 상태를 나타내는 구조체임. */
+struct{
+	uchar				DiN;
+	uchar				DoN;
+	uchar				TsK;
+	uchar               EisStatus[2];
+}	StssS ;
+
+typedef enum	
+{
+	OPC_Report = 0,
+	MTC_Report,
+	DTS_Report,
+	RC_Report,
+	EndofReportList
+}Report_Type_List;
+
+
+typedef struct{
+	int			MsgQId[NumOf_Queue];
+	QUE_INFO	QueInfo[EndofQueueID];
+	LINE_STAT	LineStat[EndofLineStat];
+	int 		VME_A_WARN_ENABLE[EndDPRAM+1];		/*	for Serial IF	*/
+	int 		VME_B_WARN_ENABLE[EndDPRAM+1];		/*	for Serial IF	*/	
+	int 		S_WARN_ENABLE[EndChannel+1];		/*	for Serial IF	*/
+	int 		S_VIEW_ENABLE[RxChannel8+1];		/*	for Serial IF, port별 data의 화면 logging 여부	*/
+	int 		E_WARN_ENABLE[SockEndChannel+1];	/*	for Ethernet IF 	*/
+	int 		E_VIEW_ENABLE[RxCh_Sock8+3];	/*	for Ethernet IFport별 data의 화면 logging 여부	*/
+	int 		Debug_ENABLE[DebugEndChannel+1];	/*	for Ethernet IF 	*/
+	int			Debug_EnableFlag[255];
+	int 		VME_WARNNING_ENABLE;	   /* error 내역의 화면 logging 여부*/
+	int 		S_WARNNING_ENABLE;	   /* error 내역의 화면 logging 여부*/
+	int			E_WARNNING_ENABLE;
+	int			D_WARNNING_ENABLE;
+	int       	runbugflag;   /* console에의 출력을 막기위한 flag, 초기값 = 0 */
+	uchar		COMM_STAT;
+	uchar		COMM_IF_STAT;
+	uchar 		ChangedMyStatus;
+	uchar		OpcRemoteCtrlFlag;
+	uchar		View_Flag;
+	LINE_INFO	OTHER_LINE_STATE[EndofLineStat];
+	uchar		OTHER_COMM_STATE[2];
+	uchar		OTHER_COMM;
+	uchar		MY_LINE;
+	uchar		MASTER_INPUT_STATE;
+	uchar		real_data_view;
+	uchar		SockReal_data_view;
+	uchar		SYSTEMSWITCH;
+	uchar 		ChangeDevice;
+	uchar		AlarmCode[25];
+	uchar		ucExtInterface[4];	
+	int 		MaxTaskNum;
+	int 		MaxLineNum;
+	uchar		Interface_to_EIS;
+	StatusSystemUnion	SystemStatus;
+	HOST_INFO	Host_Info;
+	TASK_INFO	TaskInfo[10];
+	LINE_INFO	LineInfo[EndofLineStat];
+	FSC_Device_INFO FSC_Run_Info;
+	uchar		Section_Param[8];
+	uchar		Revision[3][VarMsgSize];
+	PORT_INFO	portInfo[10];
+	Socket_PORT_INFO Sock_portInfo[15];
+	RETRY_INFO	status_report[EndofLineStat];
+	uchar		LAN_Client_Sts[EndofLineStat];
+	int	 I2C_File;
+	struct timeval time_tx_start;
+	struct timeval time_tx_end;  
+	struct timeval time_rx_start;
+	struct timeval time_rx_end;  	
+}SHM_MSG;
+
+
+typedef struct{
+	void		*FPGA_MEM_BASE;
+	int			FPGA_MEM_FD;
+	off_t 		FPGA_MAP_TARGET;
+	void		*UART_MEM_BASE;
+	int			UART_MEM_FD;
+	off_t 		UART_MAP_TARGET;
+	volatile uchar *Version;
+	volatile uchar *TEST0;
+	volatile uchar *TEST1;
+	volatile uchar *TEST2;
+	volatile uchar *TEST3;
+	volatile uchar *TEST4;
+	volatile uchar *TEST5;
+	volatile uchar *TEST6;
+	volatile uchar *DI;
+	volatile uchar *DO;
+	volatile uchar *RS422_ENABLE0;
+	volatile uchar *RS422_ENABLE1;
+	volatile uchar *RS422_MODE;
+	volatile uchar *RS422_CLK;
+	volatile uchar *RS422_LED;
+	volatile uchar *RS422_LED_CON;
+	volatile uchar *RS422_TERM_CON;
+	volatile uchar *APP_SW;
+	volatile uchar *FND_ENABLE;
+	volatile uchar *FND_LED;
+	volatile uchar *STATUS_LED;
+	volatile uchar *LED_BLANK;	
+	volatile int *WDT_CON;	
+	volatile int *WDT_TIMER;	
+	void		*VME0_MEM_BASE;
+	int			VME0_MEM_FD;
+	off_t		VME0_MAP_TARGET;	
+	volatile uchar *VME0_BUFF;
+//	uchar *VME0_BUFF;
+	void		*VME1_MEM_BASE;
+	int			VME1_MEM_FD;
+	off_t		VME1_MAP_TARGET;		
+	volatile uchar *VME1_BUFF;
+//	uchar *VME1_BUFF;
+}FPGA_REG;
+
+
+typedef struct{
+	uchar 	TxChFlag[8];
+	uchar 	RxChFlag[8];
+ 	RING_BUFFER TX_BUFFER[8];
+  	RING_BUFFER RX_BUFFER[8];
+}SHM_RING_BUF;
+
+typedef struct{
+	uchar 	VmeTxData[4][MAX_MSG_LENGTH];
+	uchar 	VmeRxData[4][MAX_MSG_LENGTH];	
+}SHM_DP_RAM;
+
+

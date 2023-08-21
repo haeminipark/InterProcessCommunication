@@ -1,0 +1,5 @@
+#!/bin/bash
+export PATH=$PATH:/root/comm
+
+/root/comm/proc_main &
+exit 0

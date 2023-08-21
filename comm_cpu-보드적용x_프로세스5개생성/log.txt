@@ -1,0 +1,170 @@
+haemin@haemin-VirtualBox:~/workspace/comm_cpu$ ./mk
+PROC_TEST1: no process found
+PROC_TEST2: no process found
+PROC_TEST3: no process found
+PROC_TEST4: no process found
+PROC_TEST5: no process found
+rm -f *.bak
+rm -f *.map
+rm -f *.o
+rm -f Proc_main.o
+rm -f proc_main core
+Compiling Proc_main.c ...
+gcc -c -I. -I../include -W -O2  -o Proc_main.o Proc_main.c
+gcc  Proc_main.o -o proc_main -lm
+nm proc_main > proc_main.map
+cp proc_main ../image/.
+rm -f *.bak
+rm -f *.map
+rm -f *.o
+rm -f proc_test1.o
+rm -f PROC_TEST1 core
+Compiling proc_test1.c ...
+gcc -c -I. -I../include -W  -O2  -o proc_test1.o proc_test1.c
+gcc  proc_test1.o -o PROC_TEST1 -lm -lpthread
+nm PROC_TEST1 > PROC_TEST1.map
+cp PROC_TEST1 ../image/.
+rm -f *.bak
+rm -f *.map
+rm -f *.o
+rm -f proc_test2.o
+rm -f PROC_TEST2 core
+Compiling proc_test2.c ...
+gcc -c -I. -I../include -W  -O2  -o proc_test2.o proc_test2.c
+gcc  proc_test2.o -o PROC_TEST2 -lm -lpthread
+nm PROC_TEST2 > PROC_TEST2.map
+cp PROC_TEST2 ../image/.
+rm -f *.bak
+rm -f *.map
+rm -f *.o
+rm -f proc_test3.o
+rm -f PROC_TEST3 core
+Compiling proc_test3.c ...
+gcc -c -I. -I../include -W  -O2  -o proc_test3.o proc_test3.c
+gcc  proc_test3.o -o PROC_TEST3 -lm -lpthread
+nm PROC_TEST3 > PROC_TEST3.map
+cp PROC_TEST3 ../image/.
+rm -f *.bak
+rm -f *.map
+rm -f *.o
+rm -f proc_test4.o
+rm -f PROC_TEST4 core
+Compiling proc_test4.c ...
+gcc -c -I. -I../include -W  -O2  -o proc_test4.o proc_test4.c
+gcc  proc_test4.o -o PROC_TEST4 -lm -lpthread
+nm PROC_TEST4 > PROC_TEST4.map
+cp PROC_TEST4 ../image/.
+rm -f *.bak
+rm -f *.map
+rm -f *.o
+rm -f proc_test5.o
+rm -f PROC_TEST5 core
+Compiling proc_test5.c ...
+gcc -c -I. -I../include -W  -O2  -o proc_test5.o proc_test5.c
+gcc  proc_test5.o -o PROC_TEST5 -lm -lpthread
+nm PROC_TEST5 > PROC_TEST5.map
+cp PROC_TEST5 ../image/.
+haemin@haemin-VirtualBox:~/workspace/comm_cpu$ Create MsgQ, id: 0 key: 64
+Create MsgQ, id: 1 key: 65
+Create MsgQ, id: 2 key: 66
+Create MsgQ, id: 3 key: 67
+[proc_test5] send_thread_function
+[proc_test5] Create receive_threads
+[proc_test4] Create send_threads
+[proc_test4] Create receive_threads
+[proc_test3] Create send_threads
+[proc_test3] Create receive_threads
+[proc_test2] Create send_threads
+[5] send_thread_function
+[proc_test2] Create receive_threads
+[4] send_thread_function
+[5] recv_thread_function
+[4] recv_thread_function
+[3] send_thread_function
+[3] recv_thread_function
+[proc_test1] Create send_threads
+[2] send_thread_function
+[2] recv_thread_function
+[proc_test1] Create receive_threads
+[1] send_thread_function
+[1] recv_thread_function
+[5] send_thread_function
+[4] send_thread_function
+[5] recv_thread_function
+[4] recv_thread_function
+[3] send_thread_function
+[3] recv_thread_function
+[2] send_thread_function
+[2] recv_thread_function
+[1] send_thread_function
+[1] recv_thread_function
+[5] send_thread_function
+[4] send_thread_function
+[5] recv_thread_function
+[4] recv_thread_function
+[3] send_thread_function
+[3] recv_thread_function
+[2] send_thread_function
+[2] recv_thread_function
+[1] send_thread_function
+[1] recv_thread_function
+[5] send_thread_function
+[4] send_thread_function
+[4] recv_thread_function
+[5] recv_thread_function
+[3] send_thread_function
+[3] recv_thread_function
+[2] send_thread_function
+[2] recv_thread_function
+[1] send_thread_function
+[1] recv_thread_function
+[5] send_thread_function
+[4] recv_thread_function
+[4] send_thread_function
+[5] recv_thread_function
+[3] send_thread_function
+[3] recv_thread_function
+[2] send_thread_function
+[2] recv_thread_function
+[1] send_thread_function
+[1] recv_thread_function
+[5] send_thread_function
+[4] send_thread_function
+[4] recv_thread_function
+[5] recv_thread_function
+[3] send_thread_function
+[3] recv_thread_function
+[2] send_thread_function
+[2] recv_thread_function
+[1] send_thread_function
+[1] recv_thread_function
+[4] send_thread_function
+[4] recv_thread_function
+[5] recv_thread_function
+[5] send_thread_function
+[3] send_thread_function
+[3] recv_thread_function
+[2] send_thread_function
+[2] recv_thread_function
+[1] send_thread_function
+[1] recv_thread_function
+[4] recv_thread_function
+[5] send_thread_function
+[5] recv_thread_function
+[3] send_thread_function
+[4] send_thread_function
+[3] recv_thread_function
+[2] send_thread_function
+[2] recv_thread_function
+[1] send_thread_function
+[1] recv_thread_function
+[5] send_thread_function
+[5] recv_thread_function
+[4] send_thread_function
+[3] send_thread_function
+[4] recv_thread_function
+[3] recv_thread_function
+[2] send_thread_function
+[2] recv_thread_function
+[1] send_thread_function
+[1] recv_thread_function

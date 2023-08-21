@@ -1,0 +1,44 @@
+#! /bin/sh
+
+ipcrm -q 131072  
+ipcrm -q 131073  
+ipcrm -q 131074  
+ipcrm -q 131075  
+ipcrm -q 131076  
+ipcrm -q 131077  
+ipcrm -q 131078  
+ipcrm -q 131079  
+ipcrm -q 131080  
+ipcrm -q 131081  
+ipcrm -q 131082  
+ipcrm -q 131083  
+ipcrm -q 131084  
+ipcrm -q 131085  
+ipcrm -q 131086  
+ipcrm -q 131087  
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
+ipcrm -q   
